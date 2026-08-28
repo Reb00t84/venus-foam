@@ -6,5 +6,13 @@ authors:
     given-names: Semyon
     orcid: "https://orcid.org/0009-0003-2093-891X"
 version: "1.0.0"
+doi: 10.5281/zenodo.22148026
 repository-code: "https://github.com/Reb00t84/venus-foam"
 license: MIT
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22148026
+    description: "Archived release of this repository (v1.0.0)."
+  - type: doi
+    value: 10.5281/zenodo.22148025
+    description: "Concept DOI (all versions)."
