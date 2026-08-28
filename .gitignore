@@ -1,0 +1,34 @@
+# Системные
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# LaTeX/xelatex промежуточные файлы (build_preprint.py их и так чистит сам,
+# это подстраховка на случай прерванной/упавшей сборки)
+preprint/_build_*
+
+# Отдельные PDF-графики -- детерминированно генерятся preprint/make_figures.py,
+# уже вшиты в итоговые препринты ниже: трекать смысла нет, только шумные
+# бинарные диффы при пересборке
+preprint/atmosphere-profile.pdf
+preprint/atmosphere-profile-ru.pdf
+preprint/energy-balance.pdf
+preprint/energy-balance-ru.pdf
+preprint/battery-divergence.pdf
+preprint/battery-divergence-ru.pdf
+preprint/radiation-shielding.pdf
+preprint/radiation-shielding-ru.pdf
+preprint/platform-cross-section.pdf
+preprint/platform-cross-section-ru.pdf
+preprint/platform-topdown.pdf
+preprint/platform-topdown-ru.pdf
+preprint/airlock-docking.pdf
+preprint/airlock-docking-ru.pdf
+
+# Итоговые препринты тоже -- финальный артефакт живёт на Zenodo (кросс-ссылка
+# гит<->зенодо в обе стороны), гит держит только воспроизводимый .md-источник
+# и кухню сборки, не дублирует скомпилированный PDF
+preprint/venus-foam-ru.pdf
+preprint/venus-foam.pdf

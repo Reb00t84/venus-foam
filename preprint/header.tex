@@ -1,0 +1,25 @@
+% header.tex — longtable-хук + xurl + microtype + инфраструктура глиф-фолбэков
+% (взято из проекта loop_search, project-specific глифы удалены)
+\usepackage{xurl}
+\usepackage{microtype}
+\usepackage[htt]{hyphenat}
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\scriptsize\setlength{\tabcolsep}{2.5pt}}
+\setlength{\emergencystretch}{4em}
+\usepackage{needspace}
+% enotez -- в отличие от endnotes умеет двусторонние гиперссылки: номер в
+% тексте кликабелен и ведёт на сноску внизу, а у сноски внизу есть обратная
+% стрелка на место цитирования в тексте (backref) -- как в википедии.
+% hyperfootnotes должен быть передан hyperref ДО его загрузки шаблоном
+% pandoc, поэтому PassOptionsToPackage, а не прямой usepackage[...]{hyperref}.
+\PassOptionsToPackage{hyperfootnotes=true}{hyperref}
+\usepackage{enotez}
+\newcommand{\enotezNoHeading}[1]{}
+\setenotez{backref=true, list-heading=\enotezNoHeading}
+\let\footnote=\endnote
+\renewcommand{\_}{\textunderscore\hspace{0pt}}
+\usepackage{newunicodechar}
+\newfontfamily\glyphfallback{TeX Gyre DejaVu Math}
+% Если xelatex ругается на "Missing character" для конкретного юникод-символа
+% (см. QC-проверку missing_chars в build_preprint.py) — добавить сюда:
+% \newunicodechar{<символ>}{{\glyphfallback <символ>}}
