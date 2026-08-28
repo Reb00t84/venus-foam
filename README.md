@@ -1,6 +1,7 @@
 # Venus Foam
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148026.svg)](https://doi.org/10.5281/zenodo.22148026)
+[![Code DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148026.svg)](https://doi.org/10.5281/zenodo.22148026)
+[![Preprint DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148408.svg)](https://doi.org/10.5281/zenodo.22148408)
 
 Engineering analysis of a modular floating station concept in the cloud layer
 of Venus (55.7 km). Every number is either computed from physical constants

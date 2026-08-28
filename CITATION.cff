@@ -16,3 +16,6 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.22148025
     description: "Concept DOI (all versions)."
+  - type: doi
+    value: 10.5281/zenodo.22148408
+    description: "Archived preprint (PDF, v1)."
