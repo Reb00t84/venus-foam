@@ -1,5 +1,7 @@
 % header.tex — longtable-хук + xurl + microtype + инфраструктура глиф-фолбэков
-% (взято из проекта loop_search, project-specific глифы удалены)
+\usepackage{graphicx}  % \includegraphics в raw-latex блоке фигур (build_preprint.py);
+                       % pandoc сам его не тянет, т.к. markdown-картинок в доке нет
+\usepackage{float}     % figure[H] -- картинка с подписью строго на месте, без float-страниц
 \usepackage{xurl}
 \usepackage{microtype}
 \usepackage[htt]{hyphenat}
@@ -13,6 +15,7 @@
 % hyperfootnotes должен быть передан hyperref ДО его загрузки шаблоном
 % pandoc, поэтому PassOptionsToPackage, а не прямой usepackage[...]{hyperref}.
 \PassOptionsToPackage{hyperfootnotes=true}{hyperref}
+\usepackage{multicol}
 \usepackage{enotez}
 \newcommand{\enotezNoHeading}[1]{}
 \setenotez{backref=true, list-heading=\enotezNoHeading}

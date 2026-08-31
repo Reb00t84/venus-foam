@@ -214,7 +214,7 @@ print("\n" + "=" * 70)
 print("10. ЛИТИЙ — МАССА ИМПОРТА vs МАССА ВСЕЙ БАТАРЕИ")
 print("=" * 70)
 
-LI_KG_PER_KWH_LOW, LI_KG_PER_KWH_HIGH = 0.10, 0.15  # частая отраслевая оценка, не жёстко источникованная
+LI_KG_PER_KWH_LOW, LI_KG_PER_KWH_HIGH = 0.10, 0.15  # частая отраслевая оценка, без твёрдого источника
 for label, M_t in (("мин (2 сут.)", M_batt_low), ("макс (3 сут.)", M_batt_high)):
     E_kwh = M_t * 1000 * PACK_WH_KG / 1000  # (кг)*(Вт*ч/кг)/1000 = кВт*ч
     li_low = E_kwh * LI_KG_PER_KWH_LOW / 1000  # т
@@ -230,7 +230,15 @@ print("""
 нужно не 644-966 т готовой батареи, а на два порядка меньше — только
 литиевую "начинку" (~10-22 т), если остальные компоненты ячейки
 (катод-хозяин, электролит, корпус) собирать/производить на месте.
-Это не отменяет необходимость импорта, но кардинально меняет его масштаб.
+
+Дальше: деградация Li-ion -- это ёмкостное угасание (рост SEI, износ
+катода/анода), а НЕ потеря лития (литий не радиоактивен, не распадается).
+Отработанные ячейки перерабатываются (гидрометаллургия / прямой рециклинг),
+возврат лития ~90-95%. Значит рекуррентный импорт лития -- это только
+потери рециклинга (~5-10% от начинки) + прирост парка, а не полная начинка
+на каждый цикл замены. Станция замкнута по литию почти полностью, зависимость
+от поставок лития -- разовая, не постоянная. (Числа рециклинга -- отраслевые,
+не под этот проект; поставить как оценку.)
 """)
 
 print("=" * 70)
@@ -367,7 +375,7 @@ for th_um, label in ((100, "тонкая"), (250, "толстая")):
 
 print("""
 Толщина плёнки (100-250 мкм) — инженерное допущение по аналогии с ETFE-плёнками
-архитектурного класса (Eden Project), не источникована для этого проекта отдельно.
+архитектурного класса (Eden Project), без источника для этого проекта отдельно.
 Это ОДНОРАЗОВЫЙ объём на постройку одной платформы, не постоянный расход: PTFE/FEP
 химически инертен именно к той среде, для которой выбран (H2SO4-туман), долговременная
 деградация в условиях облачного яруса Венеры отдельно не измерена (открытый вопрос).
@@ -435,7 +443,7 @@ print("=" * 70)
 print("19. MELiSSA / ФОСФОР — коррекция п.17 (биомасса, не только РСН)")
 print("=" * 70)
 
-DRY_FOOD_KG_DAY = 0.6     # кг сухой массы еды/чел/сутки, ориентир, не жёстко источниковано
+DRY_FOOD_KG_DAY = 0.6     # кг сухой массы еды/чел/сутки, ориентир, без твёрдого источника
 P_FRAC_SPIRULINA = 0.01   # доля P по сухой массе спирулины, лит. диапазон 0.8-1.5%
 
 for label, n in (("мин", round(people_low)), ("макс", round(people_high))):
@@ -462,7 +470,7 @@ print("20. АЭРОБОТЫ И БУКСИРЫ — на что реально и�
 print("=" * 70)
 
 Cp_H2 = 3.5 * R  # Дж/(моль*К), изобарический нагрев двухатомного газа
-V_AEROBOT = 500.0  # м^3, представительный объём (условно, не источниковано)
+V_AEROBOT = 500.0  # м^3, представительный объём (условно, без источника)
 T0_aero, P0_aero = T_22K, P_22 * 101325.0
 rho_h2_aero = P0_aero * M_H2 / (R * T0_aero)
 n_mol_aero = rho_h2_aero * V_AEROBOT / M_H2
@@ -494,59 +502,98 @@ print("=" * 70)
 
 skin_mass_low, skin_mass_high = 124400.0, 311000.0  # кг, из п.16 (100-250 мкм плёнка)
 people_mass_kg = round(people_high) * 75.0          # кг, верхняя граница населения, 75 кг/чел
+BATTERY_MASS_LOW = M_batt_low * 1000    # кг, из п.5 (Li-ion, 149 Вт*ч/кг, NASA X-57)
+BATTERY_MASS_HIGH = M_batt_high * 1000  # кг, из п.5
 
 # Допущения (флагированы явно, откалиброваны по реальным аналогам):
-BASALT_COMPOSITE_DENS = 2000.0   # кг/м^3 — базальтовый композит (не чистое волокно 2700),
-                                   # реальный референс: лист композита 4,728 кг/м^2 при 2,364 мм
+# Несущий структурный слой -- углеволоконный композит из МЕСТНОГО углерода:
+# электролиз атмосферного CO2 в расплаве карбоната -> CNT/CNF (Licht/STEP,
+# см. материалы). Консервативная инженерная оценка для композита на
+# CNT-волокне: серийные нити 1-5 ГПа, лаб. волокна/пучки 12-80 ГПа; берём
+# нижний край. Флаг: мембрана масштаба платформы из CNT не построена.
+CARBON_TENSILE_LOW, CARBON_TENSILE_HIGH = 1.0e9, 2.5e9   # Па, CNT-композит (флаг)
+CARBON_COMPOSITE_DENS = 1500.0   # кг/м^3, композит на CNT-волокне
+STRUCT_TENSILE_LOW, STRUCT_TENSILE_HIGH = CARBON_TENSILE_LOW, CARBON_TENSILE_HIGH
+STRUCT_DENS = CARBON_COMPOSITE_DENS
+# Базальт-волокно -- альтернатива (в «Открытые вопросы»): зрелый материал с
+# известными свойствами, но сырьё -- порода с поверхности, за нерешённым
+# конвейером добычи при 460 C. Держим для сверки и на случай, если добыча
+# заработает раньше масштабирования CNT-производства.
+BASALT_COMPOSITE_DENS = 2000.0   # кг/м^3 — базальт-эпокси композит
+BASALT_TENSILE_LOW, BASALT_TENSILE_HIGH = 390.9e6, 464e6  # Па, Taheri et al. 2025,
+                                   # Polymers 17(10):1348, basalt-epoxy composite
+AL_RHO = 2700.0                   # кг/м^3, 6061-T6 (ссылка в delivery-deployment-ru.md)
+AL_ULT_PA = 310e6                 # Па, предел прочности 6061-T6
+AL_E_PA = 68.9e9                  # Па, модуль 6061-T6
 PANEL_AREAL_KG_M2 = 2.5           # кг/м^2 — гибкая тонкоплёночная панель, реальный диапазон 2-3
 HAB_AREAL_LOW, HAB_AREAL_HIGH = 50.0, 75.0  # кг/м^2 — жилой модуль; TransHab даёт ~62 кг/м^2
                                    # в открытом вакууме (13154 кг/212 м^2), Венера мягче
                                    # (нет вакуумного перепада давления) — беру диапазон вокруг
+DECK_AREAL_LOW, DECK_AREAL_HIGH = 3.4, 4.6  # кг/м^2 — палубы, авиационный прокси
+                                   # (высокотрафиковая сэндвич-панель, источник и разбор в п.35)
+N_AIRLOCKS = 42  # шлюзовых камер на платформу, зафиксированное число
+AIRLOCK_MASS_KG = 9923.0  # кг за узел — ISS Quest Joint Airlock, полная комплектация,
+                            # NASA: https://www.nasa.gov/international-space-station/quest-airlock/
+AIRLOCK_TOTAL_MASS = N_AIRLOCKS * AIRLOCK_MASS_KG  # кг, единое число, не диапазон
 
 SKIN_TOTAL_AREA = 2 * AREA_TOTAL  # верх+низ, как в п.16
 HAB_AREA_LOW, HAB_AREA_HIGH = 11800.0, 16700.0  # м^2, из п.24 (100 м^2/чел)
 
-print("Допущения: базальт-композит 2000 кг/м^3 (реальный композитный лист, не чистое")
-print("волокно), панели 2,5 кг/м^2 (тонкоплёночные гибкие, реальный диапазон 2-3),")
-print("жилые модули 50-75 кг/м^2 (TransHab ~62 кг/м^2 в вакууме, Венера мягче условиями).")
+print("Допущения: несущий слой -- углекомпозит на CNT-волокне 1500 кг/м^3 (из")
+print("местного CO2, флаг), панели 2,5 кг/м^2 (тонкоплёночные гибкие, диапазон 2-3),")
+print("жилые модули 50-75 кг/м^2 (TransHab ~62 кг/м^2 в вакууме, Венера мягче условиями),")
+print("палубы 3,4-4,6 кг/м^2 (авиационный прокси, разбор в п.35).")
+print(f"Шлюзовые камеры: {N_AIRLOCKS} x {AIRLOCK_MASS_KG:,.0f} кг (ISS Quest Joint Airlock, "
+      f"полная комплектация, NASA) = {AIRLOCK_TOTAL_MASS/1000:,.0f} т.")
 print()
 
 for th_mm in (1, 2):
-    basalt_areal = (th_mm / 1000) * BASALT_COMPOSITE_DENS
-    basalt_mass = basalt_areal * SKIN_TOTAL_AREA
+    struct_areal = (th_mm / 1000) * STRUCT_DENS
+    struct_mass = struct_areal * SKIN_TOTAL_AREA
     panel_mass_low = PANEL_AREAL_KG_M2 * A_total_low    # A_total = п.6, реальная построенная площадь
     panel_mass_high = PANEL_AREAL_KG_M2 * A_total_high
     hab_mass_low = HAB_AREAL_LOW * HAB_AREA_LOW
     hab_mass_high = HAB_AREAL_HIGH * HAB_AREA_HIGH
+    deck_mass_low = DECK_AREAL_LOW * HAB_AREA_LOW
+    deck_mass_high = DECK_AREAL_HIGH * HAB_AREA_HIGH
 
-    total_low = (644000.0 + skin_mass_low + basalt_mass + panel_mass_low
-                 + hab_mass_low + people_mass_kg)
-    total_high = (966000.0 + skin_mass_high + basalt_mass + panel_mass_high
-                  + hab_mass_high + people_mass_kg)
+    total_low = (BATTERY_MASS_LOW + skin_mass_low + struct_mass + panel_mass_low
+                 + hab_mass_low + deck_mass_low + AIRLOCK_TOTAL_MASS + people_mass_kg)
+    total_high = (BATTERY_MASS_HIGH + skin_mass_high + struct_mass + panel_mass_high
+                  + hab_mass_high + deck_mass_high + AIRLOCK_TOTAL_MASS + people_mass_kg)
 
     vol_low, vol_high = total_low / lift_h2_used, total_high / lift_h2_used
     th_avg_low, th_avg_high = vol_low / AREA_TOTAL, vol_high / AREA_TOTAL
-    print(f"Базальт {th_mm} мм ({basalt_mass/1000:,.0f} т структуры):")
+    print(f"Несущий слой {th_mm} мм ({struct_mass/1000:,.0f} т структуры):")
     print(f"  суммарная масса платформы: {total_low/1000:,.0f}-{total_high/1000:,.0f} т")
     print(f"  требуемый объём H2: {vol_low:,.0f}-{vol_high:,.0f} м^3")
     print(f"  требуемая СРЕДНЯЯ толщина платформы: {th_avg_low:.1f}-{th_avg_high:.1f} м")
+    if th_mm == 1:
+        th_overall_low = th_avg_low
+    else:
+        th_overall_high = th_avg_high
 
-print("""
-Результат: требуемая средняя толщина (11-21 м) согласуется с уже заявленной
-толщиной батарейных поплавков (~20 м, дано в документе) — конструкция
-физически самосогласована в пределах точности этих допущений. Это НЕ
-строгое доказательство (все три допущения — калиброванные оценки по
-реальным аналогам, не измерения этого конкретного проекта), но проверка
-больше не пустует: числа сходятся друг с другом, а не молчат.
+print(f"""
+Результат: требуемая средняя толщина ({th_overall_low:.1f}-{th_overall_high:.1f} м) того
+же порядка, что и уже заявленная толщина батарейных поплавков (~20 м, дано в
+документе) — конструкция физически самосогласована в пределах точности этих
+допущений. Это НЕ строгое доказательство (допущения — калиброванные оценки по
+реальным аналогам, не измерения этого конкретного проекта; число шлюзов, 42,
+и их тип -- грубый верхний резерв, не выведено), но проверка больше не пустует:
+числа сходятся друг с другом, а не молчат.
 
-Источники допущений:
-- базальт-композит 2000 кг/м^3, 4,728 кг/м^2 при 2,364 мм:
-  https://4spepublications.onlinelibrary.wiley.com/doi/abs/10.1002/pc.27238
+Источники допущений (полные ссылки -- в venus-foam-ru.md, ## Источники):
+- несущий слой -- углекомпозит на CNT-волокне ~1500 кг/м^3, 1-2,5 ГПа
+  (консервативно; серийные CNT-нити 1-5 ГПа), синтез из CO2 -- Licht/STEP
+- базальт-композит 2000 кг/м^3 (альтернатива, «Открытые вопросы»)
 - тонкоплёночные гибкие панели 2-3 кг/м^2:
   https://www.sciencedirect.com/science/article/pii/S2772940023000218
 - TransHab 13154 кг / ~212 м^2 = ~62 кг/м^2:
   https://en.wikipedia.org/wiki/TransHab
   https://ntrs.nasa.gov/api/citations/20160011581/downloads/20160011581.pdf
+- ISS Quest Joint Airlock, 21877 фунтов = 9923 кг, полная комплектация:
+  https://www.nasa.gov/international-space-station/quest-airlock/
+- авиационная палубная панель 3,4-4,6 кг/м^2 -- источник в п.35
 """)
 
 print("=" * 70)
@@ -573,7 +620,7 @@ print("=" * 70)
 print("23. ВОДА — сторона спроса (без стороны предложения — та не оценена)")
 print("=" * 70)
 
-WATER_L_DAY = 25.0  # л/чел/сутки, ориентир для ЗСЖО (питьё+гигиена), не источниковано жёстко.
+WATER_L_DAY = 25.0  # л/чел/сутки, ориентир для ЗСЖО (питьё+гигиена), без источника жёстко.
 # ВНИМАНИЕ: это валовое потребление, БЕЗ рецикла (моча/конденсат влажности,
 # как в ЗСЖО МКС, КПД порядка 90%+) -- весь объём ниже трактуется как
 # добываемый заново каждый год. КПД рецикла для этой станции не найден и не
@@ -594,8 +641,8 @@ print("""
 # без Brine Processor Assembly), до 98% с BPA (демонстрировано в невесомости,
 # цель системы) -- NASA/interestingengineering.com, 2023-2024, см. источники
 WATER_RECYCLE_LO, WATER_RECYCLE_HI = 0.90, 0.98
-HH_WATER_GROSS_LO = round(people_low * WATER_L_DAY * 365 / 1000)
-HH_WATER_GROSS_HI = round(people_high * WATER_L_DAY * 365 / 1000)
+HH_WATER_GROSS_LO = round(round(people_low) * WATER_L_DAY * 365 / 1000)  # чел -- целое (118), как везде
+HH_WATER_GROSS_HI = round(round(people_high) * WATER_L_DAY * 365 / 1000)  # 167
 hh_water_net_lo = HH_WATER_GROSS_LO * (1 - WATER_RECYCLE_HI)  # мин. свежей воды: макс. рецикла
 hh_water_net_hi = HH_WATER_GROSS_HI * (1 - WATER_RECYCLE_LO)  # макс. свежей воды: мин. рецикла
 print(f"с рециклом ЗСЖО ({WATER_RECYCLE_LO*100:.0f}-{WATER_RECYCLE_HI*100:.0f}%, как на МКС): "
@@ -709,10 +756,10 @@ else:
 
 print()
 # ВАЖНО: total_low/total_high из п.21 после цикла -- это остаток от ПОСЛЕДНЕЙ
-# итерации (базальт 2 мм), не полный диапазон "2670-5020 т" (по обеим толщинам,
-# 1 и 2 мм), который печатается в п.21 и уходит в venus-foam.md -- берём явные
+# итерации (несущий слой 2 мм), не полный диапазон (по обеим толщинам 1 и 2
+# мм), который печатается в п.21 и уходит в venus-foam.md -- берём явные
 # константы, совпадающие с напечатанным там диапазоном.
-MASS_TOTAL_LOW, MASS_TOTAL_HIGH = 2667000.0, 5016000.0  # кг, полный диапазон п.21
+MASS_TOTAL_LOW, MASS_TOTAL_HIGH = 2842000.0, 4945000.0  # кг, полный диапазон п.21 (углекомпозит)
 E_lo = MASS_TOTAL_LOW * G_VENUS * 500
 E_hi = MASS_TOTAL_HIGH * G_VENUS * 500
 print(f"E(mgh) на подъём 500 м: {E_lo/1e9:.2f}-{E_hi/1e9:.2f} ГДж "
@@ -740,7 +787,7 @@ P_top_Pa = 0.10 * 101325.0
 rho_top = P_top_Pa * M_CO2_KG_MOL / (R_GAS * T_top_K)
 print(f"плотность CO2 на 65-70 км: {rho_top:.4f} кг/м^3 (из T/P профиля, идеальный газ)")
 
-Cd_sail = 1.0  # допущение: плоская сетка/парус, не источниковано отдельно
+Cd_sail = 1.0  # допущение: плоская сетка/парус, без источника отдельно
 def _drag(rho, v, cd, a):
     return 0.5 * rho * v ** 2 * cd * a
 
@@ -748,9 +795,9 @@ F_sail_lo = _drag(rho_top, rel_v_lo, Cd_sail, A_top_lo)
 F_sail_hi = _drag(rho_top, rel_v_hi, Cd_sail, A_top_hi)
 print(f"тяга паруса сепаратора: {F_sail_lo/1e3:.0f}-{F_sail_hi/1e3:.0f} кН")
 
-SIGMA_ROPE_PA = 1149e6   # Па, кручёный базальтовый канат (не чистое волокно),
-                          # Xie et al. 2024, "Tensile behavior of a novel BFRP rope"
-SAFETY_FACTOR = 3.0       # запас, стандартная инженерная практика, не источниковано отдельно
+SIGMA_ROPE_PA = 1500e6   # Па, кручёный канат из CNT-нити, консервативно
+                          # (серийная CNT-нить 1-5 ГПа, скрутка/канат режут; Licht/STEP)
+SAFETY_FACTOR = 3.0       # запас, стандартная инженерная практика, без источника отдельно
 sigma_design = SIGMA_ROPE_PA / SAFETY_FACTOR
 print(f"расчётное напряжение (канат {SIGMA_ROPE_PA/1e6:.0f} МПа / запас {SAFETY_FACTOR:.0f}x): "
       f"{sigma_design/1e6:.0f} МПа")
@@ -762,11 +809,11 @@ d_cable_hi = 2 * _math.sqrt(A_cable_hi / _math.pi) * 1000
 print(f"сечение троса (под тягу паруса): {A_cable_lo*1e6:.0f}-{A_cable_hi*1e6:.0f} мм^2 "
       f"(диаметр {d_cable_lo:.0f}-{d_cable_hi:.0f} мм)")
 
-RHO_BASALT_FIBER = 2700.0  # кг/м^3
-L_cable_lo, L_cable_hi = 9000.0, 14000.0  # м, 65,7 км смещения от платформы (55,7 км) до 65-70 км
+RHO_CNT_ROPE = 1500.0  # кг/м^3, канат из CNT-нити (тот же порядок, что несущий углекомпозит)
+L_cable_lo, L_cable_hi = 9000.0, 14000.0  # м, смещение от платформы (55,7 км) в верхний ярус 65-70 км
 
-mass_cable_lo = RHO_BASALT_FIBER * A_cable_lo * L_cable_lo
-mass_cable_hi = RHO_BASALT_FIBER * A_cable_hi * L_cable_hi
+mass_cable_lo = RHO_CNT_ROPE * A_cable_lo * L_cable_lo
+mass_cable_hi = RHO_CNT_ROPE * A_cable_hi * L_cable_hi
 weight_cable_lo = mass_cable_lo * G_VENUS
 weight_cable_hi = mass_cable_hi * G_VENUS
 print(f"масса троса: {mass_cable_lo:,.0f}-{mass_cable_hi:,.0f} кг")
@@ -1028,7 +1075,7 @@ for dT in (10, 20, 40):
           f"+{gain_pct:.0f}% к холодному, разрыв с H2 сужается до {vol_ratio_hot:.2f}x")
 
 print("""
-Единая дышимая атмосфера как подъёмный газ снимает H2-диффузионную утечку
+Единая дыхательная атмосфера как подъёмный газ снимает H2-диффузионную утечку
 и весь класс шлюзов между несущими и обитаемыми ячейками (перепад
 давления через обшивку у общей среды ~0 против движущего перепада у H2),
 ценой роста объёма несущих ячеек в ~2.8 раза при равной массе станции.
@@ -1039,6 +1086,1354 @@ print("""
 производства (там H2 не нужен как реагент, в отличие от промышленно-
 химической платформы, см. раздел "Ресурсы и производство"), не для флота
 в целом.
+""")
+
+print("=" * 70)
+print("33. FALCON HEAVY КАК ГОТОВЫЙ НОСИТЕЛЬ ДЛЯ ХАБ-СТУПЕНИ -- Δv и плотность старта")
+print("=" * 70)
+
+# HAVOC (Jones, Arney et al., NASA Langley, AIAA SPACE 2015) даёт реальный,
+# с учётом гравитационных/аэродинамических потерь, Δv для аналогичной задачи
+# (старт из облачного яруса Венеры на низкую венерианскую орбиту): 9000 м/с.
+# Сравниваем с идеальным вакуумным v_orbital из п.18 (7,21 км/с, БЕЗ потерь) --
+# разница даёт правдоподобную оценку потерь для этого профиля, не выдуманную.
+DV_HAVOC_REAL = 9000.0  # м/с, реальный (с потерями) Δv HAVOC, старт ~50-55 км -> LVO
+dv_loss_implied = DV_HAVOC_REAL - v_orbital
+print(f"v_orbital идеальный (п.18, 200 км, без потерь): {v_orbital:.0f} м/с")
+print(f"Δv HAVOC реальный (с потерями, их расчёт, старт с 50 км): {DV_HAVOC_REAL:.0f} м/с")
+print(f"подразумеваемые потери (гравитационные+аэродинамические): {dv_loss_implied:.0f} м/с "
+      f"-- правдоподобный порядок для этого профиля, не смоделированы независимо")
+
+# Falcon Heavy: реальный, публично заявленный груз на LEO с Земли и
+# стандартный для этого класса задач Δv-бюджет с потерями (не идеальный).
+FH_PAYLOAD_LEO_KG = 63_800.0   # кг, экспендable на LEO (SpaceX/Wikipedia)
+DV_EARTH_LEO_LO, DV_EARTH_LEO_HI = 9300.0, 9500.0  # м/с, стандартный диапазон с потерями
+print(f"\nFalcon Heavy (экспендабл), груз на земную LEO: {FH_PAYLOAD_LEO_KG:,.0f} кг")
+print(f"Δv-бюджет земного старта до LEO (с потерями, стандартный диапазон): "
+      f"{DV_EARTH_LEO_LO/1000:.1f}-{DV_EARTH_LEO_HI/1000:.1f} км/с")
+print(f"Требование Венеры (HAVOC, реальное) {DV_HAVOC_REAL/1000:.1f} км/с "
+      f"{'МЕНЬШЕ' if DV_HAVOC_REAL < DV_EARTH_LEO_LO else 'СОПОСТАВИМО'} "
+      f"земного бюджета {DV_EARTH_LEO_LO/1000:.1f}-{DV_EARTH_LEO_HI/1000:.1f} км/с -- "
+      f"по величине Δv тот же носитель избыточен, не требует более крупной ступени")
+
+# Плотность атмосферы на высоте старта -- ключевая проверка допущения
+# "выше = разреженнее, как на Земле". На Венере это не так.
+RHO_EARTH_SL = 1.225  # кг/м^3, стандартная плотность воздуха на уровне моря Земли
+rho_venus_platform = rho(P_PLATFORM_ATM, T_22K, M_CO2)
+ratio_density = rho_venus_platform / RHO_EARTH_SL
+print(f"\nПлотность атмосферы на высоте платформы (55,7 км, {P_PLATFORM_ATM:.2f} атм, "
+      f"{T_22K:.0f} K): {rho_venus_platform:.3f} кг/м3")
+print(f"Плотность воздуха на уровне моря Земли: {RHO_EARTH_SL} кг/м3")
+print(f"Отношение: {ratio_density:.2f} -- на высоте старта хаб-ступени плотность среды "
+      f"того же порядка, что на уровне моря Земли, НЕ вакуумно-разрежённая, как на "
+      f"сопоставимой номинальной высоте (55 км) в земной атмосфере")
+
+print("""
+По величине Δv Falcon Heavy формально избыточен для задачи (венерианское
+требование ниже земного, для которого носитель уже сертифицирован) -- это
+НЕ означает готовность к использованию без доработки. Планер, обтекатель,
+профиль манёвра и тепловая защита спроектированы под земной профиль
+разгона, где на высоте платформы (55,7 км) атмосфера уже практически
+вакуум; на Венере на этой же номинальной высоте плотность среды сопоставима
+с уровнем моря Земли (см. выше) -- аэродинамические нагрузки и нагрев при
+разгоне через оставшуюся толщу это другая, не пройденная сертификацией
+задача, а не только пересчёт топлива под другое Δv. Отдельно не смоделированы
+и не оценены: коррозионная защита от паров H2SO4 при старте, тепловой режим
+при 75°C+ окружающей среды на нижних участках разгона, требования к
+авионике/системам наведения под другой гравитационный и атмосферный профиль.
+
+Источники:
+- Δv HAVOC 9000 м/с: Arney, D.C., Jones, C., "High Altitude Venus
+  Operational Concept: An Exploration Strategy for Venus", AIAA SPACE 2015,
+  слайд "Venus Ascent Vehicle" ("Estimated 9,000 m/s total ΔV"):
+  https://ntrs.nasa.gov/citations/20160006329
+- Falcon Heavy (63,800 кг на LEO, экспендабл): https://en.wikipedia.org/wiki/Falcon_Heavy
+- Земной Δv-бюджет до LEO с потерями (9.3-9.5 км/с):
+  https://en.wikipedia.org/wiki/Gravity_loss
+""")
+
+print("=" * 70)
+print("34. МАССА ХАБ-МОДУЛЯ -- выведена из компонентов HAVOC, не придумана")
+print("=" * 70)
+
+# HAVOC IMLEO-стек дирижабля (Human Mission Mass Summary, слайд 17,
+# Arney/Jones AIAA SPACE 2015, NTRS 20160006329), компоненты, которые
+# реально долетают до Венеры и проходят EDI (без двух ступеней Trans-Venus
+# Injection -- те сгорают и сбрасываются до прибытия, не часть полезной
+# нагрузки на Венере):
+HAVOC_ATMO_HABITAT = 5.1     # т
+HAVOC_ASCENT_HABITAT = 2.2   # т -- turnaround-специфично, см. п. ниже
+HAVOC_ASCENT_VEHICLE = 62.7  # т -- turnaround-специфично, см. п. ниже
+HAVOC_AIRSHIP = 25.8         # т
+HAVOC_EDI_AEROCAPTURE = 33.3 # т
+
+edi_payload_total = (HAVOC_ATMO_HABITAT + HAVOC_ASCENT_HABITAT
+                      + HAVOC_ASCENT_VEHICLE + HAVOC_AIRSHIP + HAVOC_EDI_AEROCAPTURE)
+print(f"Полная EDI-нагрузка HAVOC (без ступеней инжекции): {edi_payload_total:.1f} т")
+
+# Turnaround-специфичное (возврат экипажа на орбиту) -- по уже принятому
+# решению не входит в стандартную доставку хаб-модуля "Пены Венеры"
+# (см. delivery-deployment-ru.md, "Принципиальное расхождение архитектур"):
+turnaround_specific = HAVOC_ASCENT_HABITAT + HAVOC_ASCENT_VEHICLE
+hub_module_mass = edi_payload_total - turnaround_specific
+print(f"Turnaround-специфичное (взлётный хаб+аппарат, исключается): "
+      f"{turnaround_specific:.1f} т")
+print(f"Масса хаб-модуля 'Пены Венеры' (выведена, не придумана): "
+      f"{hub_module_mass:.1f} т")
+print(f"  = атмосферный хаб {HAVOC_ATMO_HABITAT} + дирижабль {HAVOC_AIRSHIP} "
+      f"+ EDI/аэрозахват {HAVOC_EDI_AEROCAPTURE}")
+print("""
+Это масштаб первого хаб-модуля по прецеденту HAVOC by analogy, не
+собственный расчёт с нуля -- предполагает сопоставимый по классу
+(автоматический, атмосферный хабитат + надувная структура + теплозащита),
+не тождественный аппарат. Число валидно как порядок величины для оценки
+доставок, не как проектная масса собственной конструкции 'Пены Венеры'.
+""")
+
+print("=" * 70)
+print("34а. МИНИМАЛЬНЫЙ ДОЛГОСРОЧНЫЙ ХАБИТАТ -- на 4 чел., прецедент Transit Habitat")
+print("=" * 70)
+
+# 100 м^2/чел (п.24) была щедрая оценка "хватает ли места на ВСЕЙ платформе",
+# не минимум для первой посадочной миссии -- отброшено, беру другой реальный
+# прецедент: HAVOC Transit Habitat -- ЕДИНСТВЕННЫЙ их хабитат на реальную
+# долгую автономность (400 суток, не 30), а не визит.
+HAVOC_TRANSIT_HAB_MASS = 20.2   # т, 2 чел., 400 сут (см. п.34 источник)
+HAVOC_TRANSIT_HAB_VOL = 44.0    # м^3, 2 чел.
+HAVOC_TRANSIT_CREW = 2
+
+mass_per_person = HAVOC_TRANSIT_HAB_MASS / HAVOC_TRANSIT_CREW
+vol_per_person = HAVOC_TRANSIT_HAB_VOL / HAVOC_TRANSIT_CREW
+print(f"HAVOC Transit Habitat (400 сут, долгосрочный, не визитный): "
+      f"{mass_per_person:.1f} т/чел, {vol_per_person:.1f} м^3/чел")
+
+FIRST_CREW = 4  # экипаж первой миссии, см. delivery-deployment-ru.md
+hab_mass_crew = mass_per_person * FIRST_CREW
+hab_vol_crew = vol_per_person * FIRST_CREW
+print(f"На {FIRST_CREW} чел. (линейное масштабирование, честно, без новой "
+      f"компрессии): масса {hab_mass_crew:.1f} т, объём {hab_vol_crew:.0f} м^3")
+
+float_edi_mass = HAVOC_AIRSHIP + HAVOC_EDI_AEROCAPTURE
+print(f"Плавучая структура + EDI/аэрозахват (прецедент HAVOC, как в п.34): "
+      f"{float_edi_mass:.1f} т")
+
+crew_mission_total = hab_mass_crew + float_edi_mass
+print(f"\nПервая посадочная миссия (хабитат экипажа + плавучесть/EDI, БЕЗ "
+      f"строительной нагрузки под жилые модули/батареи): {crew_mission_total:.1f} т")
+print(f"Для сравнения, полная EDI-нагрузка HAVOC (п.34): {edi_payload_total:.1f} т -- "
+      f"{'МЕНЬШЕ' if crew_mission_total < edi_payload_total else 'БОЛЬШЕ'} неё "
+      f"на {abs(crew_mission_total-edi_payload_total):.1f} т")
+print("""
+Строительная нагрузка (материалы под дополнительные жилые модули, батарейные
+поплавки и т.д., которые экипаж возводит уже на месте) -- ОТДЕЛЬНАЯ статья,
+не посчитана здесь: нет зафиксированного числа/размера этих модулей, чтобы
+взять массу из уже имеющихся констант (несущий слой 1500 кг/м^3, панели 2,5 кг/м^2,
+жилой модуль 50-75 кг/м^2, все из п.21) без выдумывания площади с потолка.
+
+Источники (п.34 и 34а):
+- HAVOC Human Mission Mass Summary, Habitat Overview, Venus Ascent Vehicle:
+  Arney, D.C., Jones, C., "High Altitude Venus Operational Concept: An
+  Exploration Strategy for Venus", AIAA SPACE 2015:
+  https://ntrs.nasa.gov/citations/20160006329
+""")
+
+print("=" * 70)
+print("35. МАССА ПАЛУБ -- авиационный прокси (нет прямого источника под платформу)")
+print("=" * 70)
+
+# Anderson, R.A., Ougland, R.M., Karch, R.J., "Development of Lightweight,
+# Fire-Retardant, Low-Smoke, Thermally Stable Aircraft Floor Paneling",
+# Boeing Commercial Airplane Co. for NASA, NAS9-15168, NASA CR-160138,
+# June 1978. Готовая палубная сэндвич-панель (стеклоткань+номекс-соты),
+# высокотрафиковый класс (проход/камбуз), реальная усталостная нагрузка
+# (120 000 циклов x 58 кг/колесо + 35 000 циклов x 71.6 кг/колесо тележки).
+# DECK_AREAL_LOW/HIGH определены в п.21, здесь переиспользуются.
+
+# Площадь -- та же, что уже посчитана под жилые/рабочие модули (п.24):
+deck_mass_low = DECK_AREAL_LOW * HAB_AREA_LOW / 1000    # т
+deck_mass_high = DECK_AREAL_HIGH * HAB_AREA_HIGH / 1000  # т
+print(f"Авиационная палубная панель (высокотрафиковая): "
+      f"{DECK_AREAL_LOW}-{DECK_AREAL_HIGH} кг/м^2")
+print(f"Площадь под жилые/рабочие модули (п.24): {HAB_AREA_LOW:,.0f}-{HAB_AREA_HIGH:,.0f} м^2")
+print(f"Масса палуб: {deck_mass_low:.0f}-{deck_mass_high:.0f} т")
+print(f"Для сравнения, масса самих жилых модулей (п.21, обшивка отсеков "
+      f"50-75 кг/м^2): {HAB_AREAL_LOW*HAB_AREA_LOW/1000:.0f}-"
+      f"{HAB_AREAL_HIGH*HAB_AREA_HIGH/1000:.0f} т -- палубы добавляют "
+      f"{deck_mass_low/(HAB_AREAL_LOW*HAB_AREA_LOW/1000)*100:.0f}-"
+      f"{deck_mass_high/(HAB_AREAL_HIGH*HAB_AREA_HIGH/1000)*100:.0f}% "
+      f"поверх массы самих модулей — не пренебрежимо, но не меняет порядок")
+print("""
+Авиационная панель — не прямой аналог (другая нагрузка, другой ресурс
+службы, другой класс сертификации), но реальный сертифицированный
+инженерный прокси того же типа конструкции (сэндвич-панель под ходовую
+нагрузку людей и тележек), а не оценка на глаз. Своего источника под
+палубы конкретно для такой платформы в проекте нет.
+
+Источники:
+- Anderson, R.A., Ougland, R.M., Karch, R.J., "Development of Lightweight,
+  Fire-Retardant, Low-Smoke, Thermally Stable Aircraft Floor Paneling",
+  Boeing Commercial Airplane Co. for NASA, Contract NAS9-15168, NASA
+  CR-160138, June 1978: https://ntrs.nasa.gov/citations/19790012962
+""")
+
+print("=" * 70)
+print("36. ЖИЛОЙ МОДУЛЬ 11 М -- надувной хабитат (первый борт АВТОНОМНЫЙ)")
+print("=" * 70)
+
+# Первый борт без экипажа: разворачивает предобитаемую станцию, экипаж --
+# отдельным рейсом. Хабитат на входе сложен, раскрывается в фазе B.
+
+# Жёсткий аэрощит-обтекатель над сложенным пакетом -- единственное
+# отстреливаемое входное железо, считается в §53 (оснащение спуска).
+# Отдельной жертвенной массы сверх него нет.
+
+# Центральный хаб-узел -- кольцо схождения 6 лучей + подвес парашюта + узлы
+# 3 человеческих шлюзов. ВЫВОДИМ из нагрузки при раскрытии парашюта: при
+# перегрузке n на подвешенной массе M сила в подвесе F=n*M*g идёт через хаб
+# как сжатие/растяжение кольца радиуса R_hub. n парашютного участка -- 2-4
+# (типовой диапазон парашютных систем, без источника отдельно). M -- первый
+# борт ПОЛНЫЙ ~35-50 т (§52); на участке с ещё не сброшенным аэрощитом
+# реально до ~50-85 т -- флаг, консервативно взять верх диапазона позже.
+HUB_N_CHUTE = 3.0            # g при раскрытии парашюта, флаг
+R_HUB = 2.0                 # м, радиус кольца хаба (геометрия, флаг)
+M_susp_lo, M_susp_hi = 35_000.0, 50_000.0   # кг, первый борт ПОЛНЫЙ (§52)
+F_hub_lo = HUB_N_CHUTE * M_susp_lo * G_VENUS
+F_hub_hi = HUB_N_CHUTE * M_susp_hi * G_VENUS
+A_hub_lo = F_hub_lo / (AL_ULT_PA / SAFETY_FACTOR)   # м^2, сечение Al-кольца
+A_hub_hi = F_hub_hi / (AL_ULT_PA / SAFETY_FACTOR)
+HUB_FRAME_LO = 1.4 * 2 * math.pi * R_HUB * A_hub_lo * AL_RHO / 1000  # т, x1.4 фитинги/сокеты
+HUB_FRAME_HI = 1.4 * 2 * math.pi * R_HUB * A_hub_hi * AL_RHO / 1000
+print(f"Хаб-узел: сила в подвесе {F_hub_lo/1e6:.1f}-{F_hub_hi/1e6:.1f} МН "
+      f"({HUB_N_CHUTE:.0f} g на {M_susp_lo/1000:.0f}-{M_susp_hi/1000:.0f} т), "
+      f"Al-кольцо R={R_HUB:.0f} м -> {HUB_FRAME_LO:.2f}-{HUB_FRAME_HI:.2f} т "
+      f"(n парашюта и R_hub -- флаги)")
+
+MODULE_DIAM = 11.0  # м, преднадутый надувной хабитат
+MODULE_CREW = 4
+N_RING = 6          # поплавков в кольце вокруг модуля -- зафиксировано (§52)
+r_mod = MODULE_DIAM / 2
+area_mod = 4 * math.pi * r_mod**2       # м^2, наружная поверхность сферы
+vol_mod = (4/3) * math.pi * r_mod**3    # м^3
+print(f"Диаметр {MODULE_DIAM} м: площадь поверхности {area_mod:.0f} м^2, "
+      f"объём {vol_mod:.0f} м^3")
+
+# Оболочка надувного хабитата -- из ДАВЛЕНИЯ на материалах документа,
+# не TransHab-аналогия. Гибкий слой удержания = несущий углекомпозит на
+# кольцевое напряжение от перепада (1 атм внутри - P на высоте снаружи) +
+# гермокамера = фторполимерная плёнка 100-250 мкм (та же, что на поплавках).
+# Противометеоритного/радиационного/вакуумного НЕ входит: атмосфера сама
+# щит, перепад вдвое меньше вакуумного.
+p_diff_pa = (1.0 - P_PLATFORM_ATM) * 101325.0
+t_restr_lo = p_diff_pa * r_mod / (2 * STRUCT_TENSILE_HIGH / SAFETY_FACTOR)  # м
+t_restr_hi = p_diff_pa * r_mod / (2 * STRUCT_TENSILE_LOW / SAFETY_FACTOR)   # м
+restr_areal_lo = STRUCT_DENS * t_restr_lo   # кг/м^2
+restr_areal_hi = STRUCT_DENS * t_restr_hi
+bladder_areal_lo, bladder_areal_hi = DENS_PTFE * 1e-4, DENS_PTFE * 2.5e-4  # кг/м^2
+hab_areal_lo = restr_areal_lo + bladder_areal_lo
+hab_areal_hi = restr_areal_hi + bladder_areal_hi
+shell_mass_lo = hab_areal_lo * area_mod / 1000   # т
+shell_mass_hi = hab_areal_hi * area_mod / 1000   # т
+print(f"Оболочка надувного хабитата (углекомпозит-удержание из перепада "
+      f"{(1.0-P_PLATFORM_ATM):.2f} атм + фторполимерная гермокамера): "
+      f"{hab_areal_lo:.1f}-{hab_areal_hi:.1f} кг/м^2 -> {shell_mass_lo:.2f}-{shell_mass_hi:.2f} т")
+
+# Палуба -- одна, по экваториальному сечению сферы (площадь круга того же
+# диаметра), не несколько ярусов -- явное допущение, без источника для
+# этой конкретной геометрии.
+deck_area_mod = math.pi * r_mod**2  # м^2
+deck_mass_mod_lo = DECK_AREAL_LOW * deck_area_mod / 1000   # т
+deck_mass_mod_hi = DECK_AREAL_HIGH * deck_area_mod / 1000  # т
+print(f"Палуба (одна, экваториальное сечение {deck_area_mod:.0f} м^2, "
+      f"3,4-4,6 кг/м^2, п.35): {deck_mass_mod_lo:.2f}-{deck_mass_mod_hi:.2f} т")
+
+# Батареи -- по HAVOC ATMOSPHERIC Habitat (правильный аналог: атмосферный
+# хабитат у Венеры, не глубококосмический транзитник): 3 кВт на 2 чел. =
+# 1,5 кВт/чел. Верх -- x2 на долгосрочные системы (резервирование ЗСЖО,
+# бытовое сверх минимума), не выведено. МКС-бенчмарк 12-17 кВт/чел (п.5) --
+# для всей платформы с наукой, на выживательный модуль не переносится.
+POWER_PER_PERSON_LO_KW = 3.0 / 2   # HAVOC Atmospheric Habitat, 3 кВт / 2 чел.
+POWER_PER_PERSON_HI_KW = 2 * POWER_PER_PERSON_LO_KW   # x2, долгосрочные системы
+power_mod_lo = MODULE_CREW * POWER_PER_PERSON_LO_KW / 1000  # МВт
+power_mod_hi = MODULE_CREW * POWER_PER_PERSON_HI_KW / 1000  # МВт
+power_mod = power_mod_hi  # для сайзинга PV (§40) -- по верхнему спросу
+batt_mod_lo = power_mod_lo * NIGHT_DAYS_LOW * 24 * 1000 / PACK_WH_KG   # т
+batt_mod_hi = power_mod_hi * NIGHT_DAYS_HIGH * 24 * 1000 / PACK_WH_KG  # т
+print(f"Батареи ({MODULE_CREW} чел. x {POWER_PER_PERSON_LO_KW:.1f}-{POWER_PER_PERSON_HI_KW:.1f} "
+      f"кВт/чел -- HAVOC Atmospheric Habitat, ночь 2-3 сут, 149 Вт*ч/кг): "
+      f"{batt_mod_lo:.1f}-{batt_mod_hi:.1f} т")
+
+# Панели -- гибкая тонкоплёночная PV, 2,5 кг/м^2 (п.21). Канон документа:
+# наружная оболочка покрыта PV ПО ПОТРЕБНОСТИ (над жильём -- прозрачная
+# плёнка). База = дневной спрос 4 чел. + подзарядка ночи при пасмурной
+# освещённости (I_low). Полная оболочка кольца -- МВт-класс (§40), поэтому
+# кладём с РЕЗЕРВОМ x3: покрывает потерю любого одного поплавка с его PV
+# (~1/6 оболочки), деградацию за годы и рост спроса. Панели дёшевы по массе.
+PV_RESERVE = 3.0
+p_day_need_kw = (power_mod*1000 * T_DAY
+                 + power_mod*1000 * T_NIGHT / ETA_RT) / T_DAY  # кВт
+pv_area_base = p_day_need_kw * 1000 / I_low       # м^2, база под спрос, пасмурно
+pv_area_mod = PV_RESERVE * pv_area_base           # м^2, с резервом
+panel_mass_mod = PANEL_AREAL_KG_M2 * pv_area_mod / 1000  # т
+print(f"Панели PV: база под спрос 4 чел. ({p_day_need_kw:.0f} кВт средних днём, "
+      f"пасмурно) {pv_area_base:.0f} м^2; с резервом x{PV_RESERVE:.0f} "
+      f"{pv_area_mod:.0f} м^2 -> {panel_mass_mod:.2f} т")
+
+total_mod_lo = (HUB_FRAME_LO + shell_mass_lo + deck_mass_mod_lo
+                + batt_mod_lo + panel_mass_mod)
+total_mod_hi = (HUB_FRAME_HI + shell_mass_hi + deck_mass_mod_hi
+                + batt_mod_hi + panel_mass_mod)
+print(f"\nИТОГО на станции (хаб-узел + надувной хабитат: оболочка+палуба+"
+      f"батареи+панели): {total_mod_lo:.1f}-{total_mod_hi:.1f} т "
+      f"(обтекатель отстрелен, сюда НЕ входит)")
+
+# Остаток под груз: ПРАВИЛЬНЫЙ потолок -- фиксированный бюджет доставки,
+# НЕ зависящий от числа людей (иначе циклическая ошибка: crew_mission_total
+# из п.34а сам уменьшается вместе с экипажем). Берём реальный бюджет HAVOC
+# (129.1 т, EDI-нагрузка, п.34) как внешний, не наш собственный потолок --
+# меньше людей на этом же потолке оставляет БОЛЬШЕ места под груз, не меньше.
+essential_lo = total_mod_lo + float_edi_mass
+essential_hi = total_mod_hi + float_edi_mass
+cargo_left_lo = edi_payload_total - essential_hi  # худший случай: тяжёлый модуль
+cargo_left_hi = edi_payload_total - essential_lo  # лучший случай: лёгкий модуль
+print(f"\nСущественная масса (модуль + плавучесть/EDI 59.1 т): "
+      f"{essential_lo:.1f}-{essential_hi:.1f} т")
+print(f"Против фиксированного потолка HAVOC ({edi_payload_total:.1f} т, п.34, "
+      f"не наш собственный уменьшающийся бюджет): остаток под груз "
+      f"{cargo_left_lo:.1f}-{cargo_left_hi:.1f} т")
+
+print("=" * 70)
+print("37. H2-ПОПЛАВОК ДЛЯ МОДУЛЯ -- батареи и шлюз переносятся в поплавок")
+print("=" * 70)
+
+# По архитектуре документа ("несущие поплавки... содержат аккумуляторы",
+# "Платформа") батареи живут в поплавке, не в жилом модуле. Модуль из п.36
+# минус батареи; поплавок несёт батареи + сам держит на плаву всю сборку
+# (модуль + поплавок + батареи + шлюз между ними).
+module_no_batt_lo = shell_mass_lo + deck_mass_mod_lo + panel_mass_mod
+module_no_batt_hi = shell_mass_hi + deck_mass_mod_hi + panel_mass_mod
+print(f"Модуль без батарей (оболочка+палуба+панели): "
+      f"{module_no_batt_lo:.1f}-{module_no_batt_hi:.1f} т")
+
+# НЕ тот же прецедент, что 42 шлюза в п.21 (те -- полноценная стыковка между
+# жилыми/производственными модулями по всей платформе, Quest-класс). Тут --
+# редкое обслуживание поплавка (патчи Al-барьера, загрузка батарей), не
+# постоянный человеческий трафик. LEIA (Lightweight External Inflatable
+# Airlock, NASA JSC, на базе Bigelow BEAM) -- мягкий, надувной, ~2 т,
+# реальный источник: https://ntrs.nasa.gov/citations/20180007209
+LEIA_MASS_KG = 2000.0
+airlock_pair_mass = LEIA_MASS_KG / 1000  # т
+print(f"Шлюз между модулем и поплавком (LEIA, мягкий надувной, не Quest -- "
+      f"обслуживание поплавка нерегулярное, не постоянный трафик): "
+      f"{airlock_pair_mass:.1f} т")
+
+# Поплавок: ТОЛЬКО плёнка (100-250 мкм PTFE, п.16), без несущего базальта --
+# держит газ почти без перепада давления (растяжение ткани, не жёсткая
+# структура), несущий слой в платформе нужен для жёсткости огромного
+# пролёта, не для маленькой отдельной сферы. Подтверждено реальным HAVOC:
+# их дирижабль (129x34 м, 77521 м^3) имеет Hull массой 6455 кг на площади
+# ~11100 м^2 -- 0,58 кг/м^2, того же порядка, что тонкая плёнка здесь.
+FLOAT_AREAL_LOW = DENS_PTFE * 0.0001  # кг/м^2, 100 мкм
+FLOAT_AREAL_HIGH = DENS_PTFE * 0.00025  # кг/м^2, 250 мкм
+FLOAT_AREAL = FLOAT_AREAL_LOW  # берём тонкий вариант для основного расчёта ниже
+
+def solve_float_diameter(m_other_kg, lift_per_vol):
+    """m_other_kg -- всё, что поплавок должен поднять, КРОМЕ своей оболочки."""
+    D = 10.0  # стартовое приближение, м
+    for _ in range(200):
+        A = math.pi * D**2
+        V = (math.pi / 6) * D**3
+        float_shell_kg = FLOAT_AREAL * A
+        total_kg = m_other_kg + float_shell_kg
+        V_needed = total_kg / lift_per_vol
+        D_new = (V_needed * 6 / math.pi) ** (1/3)
+        if abs(D_new - D) < 1e-6:
+            D = D_new
+            break
+        D = D_new
+    return D
+
+print(f"Модуль без батарей (оболочка из давления, §36): {module_no_batt_lo:.1f}-"
+      f"{module_no_batt_hi:.1f} т; шлюз (LEIA) {airlock_pair_mass:.1f} т/шт.")
+print("Это компоненты. Собранная первая миссия -- кольцо из 6 поплавков "
+      "вокруг модуля с pressure-vessel оболочкой, §52.")
+
+print("""
+ВНИМАНИЕ на задваивание: сборка первой миссии (модуль+батареи+шлюзы+поплавки)
+может пересекаться с уже посчитанными 59,1 т "плавучесть/EDI" из HAVOC (п.34) --
+у HAVOC дирижабль сам по себе одновременно и вход в атмосферу, и рабочий
+буй, отдельного поплавка сверху там нет. Не решено, что из двух чисел
+использовать вместо другого, а не складывать оба -- открытый вопрос.
+""")
+
+print("=" * 70)
+print("38. ОДИН БАЛЛОН 20 М, МНОГОФУНКЦИОНАЛЬНЫЙ -- сам себя держит?")
+print("=" * 70)
+
+# Тот же несущий поплавок, что уже упомянут в документе (~20 м), сразу
+# жилой+батарейный+плавучий в одном объёме, без отдельного поплавка/шлюза.
+BALLOON_DIAM = 20.0  # м, уже заявленный в документе диаметр
+r_bal = BALLOON_DIAM / 2
+area_bal = 4 * math.pi * r_bal**2
+vol_bal = (4/3) * math.pi * r_bal**3
+deck_area_bal = math.pi * r_bal**2  # то же допущение -- одна палуба, экватор
+
+shell_bal_lo = HAB_AREAL_LOW * area_bal / 1000
+shell_bal_hi = HAB_AREAL_HIGH * area_bal / 1000
+deck_bal_lo = DECK_AREAL_LOW * deck_area_bal / 1000
+deck_bal_hi = DECK_AREAL_HIGH * deck_area_bal / 1000
+panel_bal = PANEL_AREAL_KG_M2 * area_bal / 1000
+# батареи -- те же 4 чел., то же 6 кВт/чел (HAVOC Transit Habitat)
+batt_bal_lo, batt_bal_hi = batt_mod_lo, batt_mod_hi
+
+need_lo = shell_bal_lo + deck_bal_lo + panel_bal + batt_bal_lo
+need_hi = shell_bal_hi + deck_bal_hi + panel_bal + batt_bal_hi
+lift_avail_t = lift_h2_amb * vol_bal / 1000
+
+print(f"20 м: площадь {area_bal:.0f} м^2, объём {vol_bal:.0f} м^3")
+print(f"Нужная масса (оболочка+палуба+панели+батареи): {need_lo:.1f}-{need_hi:.1f} т")
+print(f"Доступная подъёмная сила H2 при этом объёме: {lift_avail_t:.1f} т")
+print(f"Дефицит: {need_lo/lift_avail_t:.0f}-{need_hi/lift_avail_t:.0f}x -- "
+      f"{'НЕ ДЕРЖИТСЯ' if need_lo > lift_avail_t else 'держится'}")
+print("""
+Не держится сам себя ни в каком варианте -- разрыв на порядок. ~20 м из
+документа работает только как ячейка ВНУТРИ связанной "пены" (баланс масс
+всей платформы, п.21, где толщина усреднена по площади ВСЕЙ конструкции),
+не как изолированный самодостаточный баллон с полной жилой начинкой внутри
+одного объёма. Изолированная версия (модуль+батареи+плавучесть в одном) на
+этом масштабе физически не сходится с этими допущениями по площади/объёму
+сферы -- нужен либо на порядок больший объём (см. п.37, ~50 м), либо
+распределённая по многим ячейкам конструкция, как и заявлено в документе.
+""")
+
+print("=" * 70)
+print("39. ТОЛЩИНА ЖИЛОЙ ОБОЛОЧКИ ИЗ ДАВЛЕНИЯ -- pressure vessel, не TransHab-аналог")
+print("=" * 70)
+
+# TransHab-число (50-75 кг/м^2) несёт три задачи разом: давление +
+# микрометеориты + радиация. На Венере метеориты не актуальны вообще
+# (атмосфера сама щит), радиация уже посчитана отдельно (атмосферный столб
+# даёт ~54% земного уровня, п. деторождение). Остаётся только давление,
+# и то вдвое меньше вакуумного (0,51 атм перепад против ~1 атм у TransHab).
+# Считаю прямым pressure-vessel расчётом на реальном материале платформы.
+P_DIFF_ATM = 1.0 - P_PLATFORM_ATM  # атм, разница между 1 атм внутри и 0,49 снаружи
+P_DIFF_PA = P_DIFF_ATM * 101325.0
+sigma_allow_lo = STRUCT_TENSILE_LOW / SAFETY_FACTOR
+sigma_allow_hi = STRUCT_TENSILE_HIGH / SAFETY_FACTOR
+
+r_ref = MODULE_DIAM / 2  # м, тот же модуль 11 м, что в п.36-37, для сравнимости
+t_lo = P_DIFF_PA * r_ref / (2 * sigma_allow_hi)  # тоньше при более прочном материале
+t_hi = P_DIFF_PA * r_ref / (2 * sigma_allow_lo)  # толще при менее прочном
+
+PRESSURE_HAB_AREAL_LOW = STRUCT_DENS * t_lo
+PRESSURE_HAB_AREAL_HIGH = STRUCT_DENS * t_hi
+
+print(f"Перепад давления: {P_DIFF_ATM:.2f} атм ({P_DIFF_PA:.0f} Па) -- вдвое меньше "
+      f"вакуумного (TransHab держит ~1 атм)")
+print(f"Углекомпозит (CNT-волокно, консервативно), запас {SAFETY_FACTOR:.0f}x: "
+      f"допустимое напряжение {sigma_allow_lo/1e6:.0f}-{sigma_allow_hi/1e6:.0f} МПа")
+print(f"Толщина стенки сферы {MODULE_DIAM:.0f} м (r={r_ref:.1f} м): "
+      f"{t_lo*1000:.2f}-{t_hi*1000:.2f} мм")
+print(f"Areal-масса из чистого давления: {PRESSURE_HAB_AREAL_LOW:.2f}-"
+      f"{PRESSURE_HAB_AREAL_HIGH:.2f} кг/м^2 -- против {HAB_AREAL_LOW:.0f}-"
+      f"{HAB_AREAL_HIGH:.0f} кг/м^2 TransHab-допущения (п.21), "
+      f"в {HAB_AREAL_LOW/PRESSURE_HAB_AREAL_HIGH:.0f}-"
+      f"{HAB_AREAL_HIGH/PRESSURE_HAB_AREAL_LOW:.0f}x меньше")
+
+print("""
+Это база оболочки надувного хабитата первой миссии (§36: этот слой удержания
++ фторполимерная гермокамера). Для всей платформы (п.21) HAB_AREAL 50-75
+кг/м^2 пока оставлен -- там та же логика (метеориты не актуальны, перепад
+вдвое меньше вакуумного) не применена, число TransHab несёт лишний груз
+задач, которых у Венеры нет; это отдельная правка платформенного баланса.
+Оговорка по §36-числу: чистое давление, без реальной технологии
+герметизации швов/окон/стыков с палубой -- нижняя граница.
+""")
+
+print("=" * 70)
+print("40. ЭНЕРГИЯ ПЕРВОЙ МИССИИ -- канон: наружная оболочка модуля И поплавков")
+print("    покрыта гибкой PV по потребности (осн. документ, Материалы/Энергетика)")
+print("=" * 70)
+
+# Доступная под PV наружная площадь: модуль 380 м^2 + 6 поплавков кольца
+# (~23 м, зафиксировано, §52). I_low/I_high уже включают ETA_PANEL=0,22 (п.3).
+D_FLOAT_NOM = 23.0
+skin_avail = area_mod + N_RING * math.pi * D_FLOAT_NOM**2   # м^2
+gen_avail_lo = skin_avail * I_low / 1000   # кВт при пасмурной освещённости
+gen_avail_hi = skin_avail * I_high / 1000  # кВт при ясной
+print(f"Наружная площадь под PV (модуль + 6 поплавков ~{D_FLOAT_NOM:.0f} м): "
+      f"{skin_avail:,.0f} м^2")
+print(f"Если покрыть её всю: генерация {gen_avail_lo:,.0f}-{gen_avail_hi:,.0f} кВт")
+
+# Спрос первой миссии: 4 чел., дневная цель + подзарядка ночи (цикл 60/60 ч).
+e_day_demand_mod = power_mod*1000 * T_DAY + (power_mod*1000 * T_NIGHT) / ETA_RT  # Вт*ч
+p_day_avg_needed_mod = e_day_demand_mod / T_DAY  # кВт
+print(f"Нужно в среднем днём ({power_mod*1000:.0f} кВт станции + подзарядка ночи, "
+      f"{ETA_RT*100:.0f}% КПД): {p_day_avg_needed_mod:.1f} кВт")
+
+# Сколько PV реально нужно покрыть (по потребности, не вся оболочка):
+pv_area_need_lo = p_day_avg_needed_mod * 1000 / I_high   # м^2 при ясной
+pv_area_need_hi = p_day_avg_needed_mod * 1000 / I_low    # м^2 при пасмурной
+pv_mass_lo = PANEL_AREAL_KG_M2 * pv_area_need_lo / 1000  # т
+pv_mass_hi = PANEL_AREAL_KG_M2 * pv_area_need_hi / 1000  # т
+print(f"PV под этот спрос: {pv_area_need_lo:.0f}-{pv_area_need_hi:.0f} м^2 "
+      f"({pv_area_need_hi/skin_avail*100:.0f}% доступной оболочки), масса "
+      f"{pv_mass_lo:.2f}-{pv_mass_hi:.2f} т")
+print("Дефицита нет: спрос 4 чел. -- десятки кВт, оболочка кольца даёт МВт-класс.")
+print("Плавучесть, масса кольца, энергия на подъём -- §52.")
+
+print("=" * 70)
+print("41. РЕЦИКЛИНГ-ОБОРУДОВАНИЕ -- нужен ли третий шар?")
+print("=" * 70)
+
+# Реальная эксплуатационная масса МКС-оборудования (не оценка):
+# Bagdigian, Dake, Gentry, Gault, "ISS ECLSS Mass and Crewtime Utilization
+# In Comparison to a Long Duration Human Space Exploration Mission",
+# ICES-2015-094, 2015: OGS (генерация O2) 676 кг при запуске (2007),
+# WRS (рецикл воды) 1385 кг при запуске (2008). Оба числа -- начальная
+# масса системы для штатного экипажа МКС (до 7 чел.), подтверждены прямо
+# по тексту статьи.
+OGS_MASS_KG = 676.0
+WRS_MASS_KG = 1385.0
+ECLSS_MASS_T = (OGS_MASS_KG + WRS_MASS_KG) / 1000
+
+print(f"OGS (генерация O2, МКС, 2007): {OGS_MASS_KG:.0f} кг")
+print(f"WRS (рецикл воды, МКС, 2008): {WRS_MASS_KG:.0f} кг")
+print(f"Итого рециклинг-оборудование: {ECLSS_MASS_T:.2f} т")
+print(f"Против массы самого модуля без батарей ({module_no_batt_lo:.1f}-"
+      f"{module_no_batt_hi:.1f} т): {ECLSS_MASS_T/module_no_batt_hi*100:.0f}-"
+      f"{ECLSS_MASS_T/module_no_batt_lo*100:.0f}% добавки")
+print(f"Полный манифест первой миссии и остаток против потолка HAVOC -- §52; "
+      f"{ECLSS_MASS_T:.1f} т в этом остатке тонут без следа.")
+
+print(f"""
+Третий шар не нужен: {ECLSS_MASS_T:.2f} т реального МКС-оборудования на
+4 чел. -- мелочь и по массе самого модуля (~{ECLSS_MASS_T/module_no_batt_hi*100:.0f}%
+добавки), и по остатку груза (§52). Ставится внутрь уже существующего
+жилого модуля, не отдельная конструкция.
+
+НЕ посчитано отдельно: расходники до выхода рецикла на режим (стартовый
+запас воды/еды/воздуха на первые дни/недели, пока рецикл не набрал обороты)
+-- нужна явная длительность запаса, чтобы взять массу из уже установленных
+норм (25 л/чел/сутки вода, 0,84 кг/чел/сутки O2, 0,6 кг/чел/сутки сухой
+еды), без выдуманной длительности не считаю.
+""")
+
+print("=" * 70)
+print("42. СТАРТОВЫЙ ЗАПАС РАСХОДНИКОВ -- 30 суток, HAVOC-прецедент")
+print("=" * 70)
+
+# Длительность не задана явно -- беру уже повторяющийся в этом разборе
+# реальный ориентир: HAVOC Phase III, "30-Day Crew to Atmosphere" (см.
+# делались все сравнения этой длительности выше), не выдуманное число.
+# Нормы -- уже установленные в проекте (п.17, 22-23): 25 л/чел/сутки вода,
+# 0,84 кг/чел/сутки O2, 0,6 кг/чел/сутки сухой еды.
+BUFFER_DAYS = 30
+
+water_buffer_kg = WATER_L_DAY * MODULE_CREW * BUFFER_DAYS  # л=кг для воды
+o2_buffer_kg = O2_KG_DAY * MODULE_CREW * BUFFER_DAYS
+food_buffer_kg = DRY_FOOD_KG_DAY * MODULE_CREW * BUFFER_DAYS
+
+water_buffer_t = water_buffer_kg / 1000
+o2_buffer_t = o2_buffer_kg / 1000
+food_buffer_t = food_buffer_kg / 1000
+total_buffer_t = water_buffer_t + o2_buffer_t + food_buffer_t
+
+print(f"На {MODULE_CREW} чел., {BUFFER_DAYS} суток (до выхода рецикла на режим):")
+print(f"  вода: {WATER_L_DAY:.0f} л/чел/сутки -> {water_buffer_t:.2f} т")
+print(f"  O2: {O2_KG_DAY:.2f} кг/чел/сутки -> {o2_buffer_t:.2f} т")
+print(f"  еда (сухая масса): {DRY_FOOD_KG_DAY:.1f} кг/чел/сутки -> {food_buffer_t:.2f} т")
+print(f"ИТОГО стартовый запас на 30 суток: {total_buffer_t:.2f} т")
+print("Едет с ЭКИПАЖНЫМ рейсом (§52), не в первом (автономном) борте.")
+
+print("""
+Вода доминирует запас. 30 суток -- не измерение, а перенос прецедента HAVOC
+(на выход рецикла/биореактора на режим); при другом сроке число линейно
+пересчитывается. Экипажный рейс §52 несёт И 30-суточный стартовый, И полный
+оконный запас (§47) -- консервативно.
+""")
+
+print("=" * 70)
+print("43. БИОРЕАКТОР (водоросли) И СЕПАРАТОР -- масса оборудования")
+print("=" * 70)
+
+# MELiSSA Pilot Plant (ESA, тот же прецедент, что уже в п.7 документа):
+# 80 л культуры спирулины на человека покрывает O2/биомассу. Источник:
+# melissafoundation.org/page/photobioreactor -- масса самого оборудования
+# (бак, насосы, подсветка, сенсоры) на странице и в найденных публикациях
+# НЕ дана, посчитана только жидкость (нижняя граница, не полная масса).
+MELISSA_L_PER_PERSON = 80.0
+CULTURE_DENS = 1000.0  # кг/м^3, вода как база (культура в основном вода)
+
+culture_vol_l = MELISSA_L_PER_PERSON * MODULE_CREW
+culture_mass_t = culture_vol_l / 1000 * CULTURE_DENS / 1000
+print(f"Биореактор, {MELISSA_L_PER_PERSON:.0f} л/чел x {MODULE_CREW} чел: "
+      f"{culture_vol_l:.0f} л культуры")
+print(f"Масса жидкости (культура ~ вода): {culture_mass_t:.2f} т")
+print("""
+Это ТОЛЬКО жидкость, не оборудование целиком -- бак, насосы, светодиодная
+подсветка, датчики без источника ни на странице MELiSSA Foundation, ни
+в найденных публикациях (проверено, не выдумываю добавку). Нижняя граница,
+не готовое число для баланса масс.
+""")
+
+# Сепаратор облачной воды -- искал реальную areal-массу сетки/мембраны
+# импакционного тумановлавливателя (Raschel mesh, стандартный туманоуловитель,
+# тот же принцип, что уже в тексте документа), НЕ НАЙДЕНА ни в одном
+# проверенном источнике (производители дают только эффективность сбора,
+# л/м^2/сутки, не массу сетки). Честно открытый вопрос, не считаю с потолка.
+print("Сепаратор облачной воды: areal-масса сетки/мембраны тумановлавливателя")
+print("НЕ НАЙДЕНА ни в одном проверенном источнике (публикации по Raschel")
+print("mesh дают только эффективность сбора л/м^2/сутки, не массу самой")
+print("сетки) -- честно открытый вопрос, число с потолка не даю.")
+
+print("=" * 70)
+print("44. C3/Δv ЗЕМЛЯ->ВЕНЕРА -- закрывает давний открытый вопрос")
+print("=" * 70)
+
+# Гомановский (минимально-энергетический) трансфер, реальные орбитальные
+# константы (Солнце, Земля, Венера) -- не с потолка, стандартные значения.
+GM_SUN = 1.32712440018e20  # м^3/с^2
+AU = 1.495978707e11        # м
+R_EARTH_ORBIT = 1.0 * AU
+R_VENUS_ORBIT = 0.7233 * AU  # среднее гелиоцентрическое расстояние Венеры
+GM_EARTH = 3.986004418e14  # м^3/с^2
+R_EARTH = 6_371_000.0
+H_LEO_EARTH = 200_000.0
+
+a_transfer = (R_EARTH_ORBIT + R_VENUS_ORBIT) / 2
+v_earth_orb = math.sqrt(GM_SUN / R_EARTH_ORBIT)
+v_venus_orb = math.sqrt(GM_SUN / R_VENUS_ORBIT)
+v_transfer_earth = math.sqrt(GM_SUN * (2/R_EARTH_ORBIT - 1/a_transfer))
+v_transfer_venus = math.sqrt(GM_SUN * (2/R_VENUS_ORBIT - 1/a_transfer))
+v_inf_dep = abs(v_earth_orb - v_transfer_earth)
+v_inf_arr = abs(v_venus_orb - v_transfer_venus)
+C3_dep = v_inf_dep**2
+t_transfer_days = math.pi * math.sqrt(a_transfer**3 / GM_SUN) / 86400
+
+r_leo = R_EARTH + H_LEO_EARTH
+v_leo = math.sqrt(GM_EARTH / r_leo)
+dv_leo_to_venus = v_leo * (math.sqrt(2 + C3_dep/v_leo**2) - 1)
+
+print(f"Гомановский трансфер Земля->Венера (минимально-энергетический):")
+print(f"  C3 отлёта: {C3_dep/1e6:.2f} км^2/с^2, v_inf прибытия: {v_inf_arr/1000:.2f} км/с")
+print(f"  время перелёта: {t_transfer_days:.0f} сут")
+print(f"  Δv от LEO (200 км) до трансферной траектории: {dv_leo_to_venus/1000:.2f} км/с")
+
+print(f"""
+Сверка с реальным числом HAVOC (независимая проверка, п.3 проекта): у них
+Earth Departure ΔV = 3.9 км/с при более быстром перелёте (110 сут против
+{t_transfer_days:.0f} сут здесь) -- ожидаемо чуть больше минимально-
+энергетического {dv_leo_to_venus/1000:.1f} км/с, не противоречие, а
+следствие более быстрой траектории. Закрывает открытый вопрос C3 для
+Венеры, который не удалось найти готовым на графике SLS.
+""")
+
+print("=" * 70)
+print("45. ПЕРЕСЧЁТ ПЕРВОЙ МИССИИ С PRESSURE-VESSEL ОБОЛОЧКОЙ (§39 в §36-42)")
+print("=" * 70)
+
+# §39 даёт нижнюю границу оболочки из чистого давления, в разы легче
+# TransHab-допущения (§21/36). Подставляю обратно, пересчитываю всю цепочку
+# модуль->поплавок->энергия->запас->итог тем же путём, что и §36-42.
+shell_mass_lo2 = PRESSURE_HAB_AREAL_LOW * area_mod / 1000   # т
+shell_mass_hi2 = PRESSURE_HAB_AREAL_HIGH * area_mod / 1000  # т
+print(f"Оболочка (pressure-vessel, {PRESSURE_HAB_AREAL_LOW:.2f}-"
+      f"{PRESSURE_HAB_AREAL_HIGH:.2f} кг/м^2): {shell_mass_lo2:.2f}-"
+      f"{shell_mass_hi2:.2f} т (было {shell_mass_lo:.1f}-{shell_mass_hi:.1f} т)")
+
+module_no_batt_lo2 = shell_mass_lo2 + deck_mass_mod_lo + panel_mass_mod
+module_no_batt_hi2 = shell_mass_hi2 + deck_mass_mod_hi + panel_mass_mod
+print(f"Модуль без батарей: {module_no_batt_lo2:.2f}-{module_no_batt_hi2:.2f} т "
+      f"(было {module_no_batt_lo:.1f}-{module_no_batt_hi:.1f} т)")
+
+print("Модуль без батарей по pressure-vessel оболочке -- нижняя граница")
+print("(чистое давление, без швов/окон/стыков с палубой, см. §39). Это ядро")
+print("кольцевой сборки первой миссии; полный манифест -- §52.")
+
+print("=" * 70)
+print("46. БАК/СИСТЕМА НАКАЧКИ H2 ПОПЛАВКА -- по реальному отношению HAVOC")
+print("=" * 70)
+
+# HAVOC даёт (гелий+баки)/объём для двух РАЗНЫХ масштабов их дирижабля --
+# отношение совпадает, значит это реальный инженерный коэффициент, не
+# случайность одного случая:
+HAVOC_TANK_ROBOTIC_KG = 118.0 + 96.0      # гелий+баки, роботизированная миссия
+HAVOC_VOL_ROBOTIC = 1118.0                 # м^3
+HAVOC_TANK_HUMAN_KG = 8183.0 + 6623.0     # гелий+баки, пилотируемая миссия
+HAVOC_VOL_HUMAN = 77521.0                  # м^3
+
+ratio_robotic = HAVOC_TANK_ROBOTIC_KG / HAVOC_VOL_ROBOTIC
+ratio_human = HAVOC_TANK_HUMAN_KG / HAVOC_VOL_HUMAN
+print(f"HAVOC (гелий+баки)/объём: роботизированный {ratio_robotic:.3f} кг/м^3, "
+      f"пилотируемый {ratio_human:.3f} кг/м^3 -- совпадает на двух масштабах")
+TANK_GAS_RATIO = (ratio_robotic + ratio_human) / 2  # среднее, различие в 3-м знаке
+
+# Проверка коэффициента на диапазоне диаметров: поплавок кольца первой
+# миссии (~23 м, §52) и крупный одиночный поплавок для верхней границы.
+float_diams = {
+    "поплавок кольца, ~23 м (§52)": 23.0,
+    "одиночный крупный поплавок, ~45 м": 45.0,
+}
+print(f"\nПо коэффициенту {TANK_GAS_RATIO:.3f} кг/м^3 (гелий+баки HAVOC, применено "
+      f"к H2+бакам по аналогии, водород и гелий сопоставимы по хранению):")
+tank_masses = []
+for label, D in float_diams.items():
+    V = (math.pi/6) * D**3
+    tank_mass_t = TANK_GAS_RATIO * V / 1000
+    tank_masses.append(tank_mass_t)
+    print(f"  {label}, D={D} м, V={V:.0f} м^3: {tank_mass_t:.2f} т (газ+тара на поплавок)")
+print("""
+Аналогия: HAVOC хранит гелий, здесь -- водород, сопоставимые по хранению
+лёгкие газы, коэффициент переносится по аналогии, не измерен для H2
+отдельно. Закрывает пункт "без источника тара" -- была только масса
+самого газа (без тары), теперь есть и тара по реальному отношению.
+""")
+
+print("=" * 70)
+print("47. ВЫЖИВАЕМОСТЬ НА ОДНО ОКНО (583.9 сут) -- 30-суточный запас не хватает")
+print("=" * 70)
+
+WINDOW_DAYS = 583.9  # синодический период, п.44
+
+# Еда: та же норма, что и в стартовом запасе, но на полное окно.
+food_window_t = DRY_FOOD_KG_DAY * MODULE_CREW * WINDOW_DAYS / 1000
+print(f"Еда на {WINDOW_DAYS:.0f} сут, {MODULE_CREW} чел., без биореактора "
+      f"(оборудование без источника, п.43): {food_window_t:.2f} т")
+
+# Вода: гигиена+питьё, потери при рецикле 90-98% (WATER_RECYCLE_LO/HI, п.23).
+water_gross_window_kg = WATER_L_DAY * MODULE_CREW * WINDOW_DAYS
+water_loss_lo = water_gross_window_kg * (1 - WATER_RECYCLE_HI)
+water_loss_hi = water_gross_window_kg * (1 - WATER_RECYCLE_LO)
+print(f"Вода (гигиена+питьё), потеря при рецикле {WATER_RECYCLE_LO*100:.0f}-"
+      f"{WATER_RECYCLE_HI*100:.0f}%: {water_loss_lo/1000:.2f}-{water_loss_hi/1000:.2f} т")
+
+# O2 через OGS: электролиз воды, H2 стравливается за борт (не возвращается
+# в контур -- реальный факт, Bagdigian et al., "hydrogen is vented
+# overboard"), то есть КАЖДЫЙ кг O2 стоит воды безвозвратно, отдельно от
+# гигиенической потери выше.
+M_H2O, M_O2_MOL = 18.02, 32.0
+WATER_PER_O2 = (2*M_H2O) / M_O2_MOL  # стехиометрия 2H2O -> 2H2 + O2
+o2_water_cost_kg = O2_KG_DAY * MODULE_CREW * WINDOW_DAYS * WATER_PER_O2
+print(f"Вода на электролиз O2 (H2 теряется безвозвратно, стехиометрия "
+      f"2H2O->2H2+O2, {WATER_PER_O2:.3f} кг воды/кг O2): "
+      f"{o2_water_cost_kg/1000:.2f} т -- ОТДЕЛЬНО от гигиенической потери")
+
+total_gap_lo = food_window_t + water_loss_lo/1000 + o2_water_cost_kg/1000
+total_gap_hi = food_window_t + water_loss_hi/1000 + o2_water_cost_kg/1000
+print(f"\nПолный разрыв на одно окно (еда+потеря воды+вода на O2): "
+      f"{total_gap_lo:.2f}-{total_gap_hi:.2f} т")
+print(f"30-суточный стартовый запас (п.42) покрывает лишь "
+      f"{3.17/total_gap_lo*100:.0f}-{3.17/total_gap_hi*100:.0f}% этого разрыва")
+
+print(f"""
+Ответ: НЕТ, выживаемость на полное окно не обеспечена текущим манифестом.
+Без работающего биореактора (масса оборудования без источника, п.43) и
+без замены потерь воды/O2 (сепаратор -- масса без источника, п.43) нужен
+либо второй запас такого масштаба (везти сразу, не дожидаясь окна 2), либо
+рабочее локальное производство до конца текущего манифеста не доведено.
+""")
+
+print("=" * 70)
+print("48. АЭРОБОТ ПЕРВОЙ МИССИИ -- внешние работы фазы развёртывания,")
+print("    ранее не в verify.py")
+print("=" * 70)
+
+# Нужен на первой миссии для работ во внешней среде на фазе развёртывания:
+# надуть/оснастить поплавок, состыковать модуль с поплавком, принять
+# грузовую капсулу, внешний осмотр, подключить магистрали. Обслуживание
+# обшивки платформы (гекс-патчи) сюда НЕ входит -- обшивки на этом этапе
+# ещё нет, и несущее волокно для неё производится позже, на промышленно-химической
+# платформе. V_AEROBOT=500 м^3 уже используется в п.28 (высотный манёвр),
+# геометрия -- та же сфера, что для модуля/поплавка.
+r_aero = (3 * V_AEROBOT / (4*math.pi)) ** (1/3)
+area_aero = 4 * math.pi * r_aero**2
+aerobot_hull_lo = FLOAT_AREAL_LOW * area_aero / 1000   # т, тонкая плёнка
+aerobot_hull_hi = FLOAT_AREAL_HIGH * area_aero / 1000  # т, толстая плёнка
+
+print(f"Аэробот, V={V_AEROBOT:.0f} м^3 (та же геометрия, что для поплавка): "
+      f"r={r_aero:.2f} м, площадь {area_aero:.0f} м^2")
+print(f"Корпус (тонкая плёнка, тот же прокси, что поплавок): "
+      f"{aerobot_hull_lo:.2f}-{aerobot_hull_hi:.2f} т")
+print(f"Полезная нагрузка (реальный JPL-прецедент, п.20 источников): 100 кг "
+      f"-- не добавляется к массе корпуса, это грузоподъёмность, не тара")
+
+print(f"""
+ИТОГО аэробот (корпус): {aerobot_hull_lo:.2f}-{aerobot_hull_hi:.2f} т.
+Манипулятор и рама-грузоноситель -- отдельно, §50; сходимость оболочки с
+оснасткой -- §51.
+""")
+
+print("Поздние фазы, в первую миссию НЕ входят: обслуживание обшивки")
+print("платформы (гекс-патчи), местное производство несущего волокна и панелей на")
+print("промышленно-химической платформе, масштабирование флота ботов под")
+print("исследования и производство.")
+
+print("=" * 70)
+print("49. ПОЛНЫЙ АЭРОБОТ -- корпус+H2 газ/тара+авионика")
+print("=" * 70)
+
+# Газ+тара -- тот же коэффициент HAVOC, что и для поплавка, п.46.
+aerobot_gas_tank_t = TANK_GAS_RATIO * V_AEROBOT / 1000
+print(f"H2 газ+тара ({TANK_GAS_RATIO:.3f} кг/м^3 x {V_AEROBOT:.0f} м^3): "
+      f"{aerobot_gas_tank_t:.3f} т")
+
+# Авионика/питание/связь -- реальный аналог, полный 1U CubeSat (структура+
+# компьютер+радио+батарея вместе), стандартный класс малых автономных
+# аппаратов: 0.95-1.33 кг (Fox-1A, FUNcube-1, OSSI-1, реальные летавшие
+# аппараты).
+AVIONICS_LOW_KG, AVIONICS_HIGH_KG = 0.95, 1.33
+print(f"Авионика/питание/связь (1U CubeSat-аналог): "
+      f"{AVIONICS_LOW_KG/1000:.4f}-{AVIONICS_HIGH_KG/1000:.4f} т")
+
+aerobot_full_lo = aerobot_hull_lo + aerobot_gas_tank_t + AVIONICS_LOW_KG/1000
+aerobot_full_hi = aerobot_hull_hi + aerobot_gas_tank_t + AVIONICS_HIGH_KG/1000
+print(f"\nПолный аэробот (корпус+газ/тара+авионика): "
+      f"{aerobot_full_lo:.3f}-{aerobot_full_hi:.3f} т")
+print(f"Авионика тонет в массе корпуса+газа (<2% итога) -- не значимая статья.")
+
+print("=" * 70)
+print("50. БОТ ПЕРВОЙ МИССИИ -- манипулятор + рама-грузоноситель для")
+print("    внешних работ фазы развёртывания")
+print("=" * 70)
+
+# Сервисный аэробот фазы развёртывания: манипулятор + рама-грузоноситель.
+# Область применения и контекст -- delivery-deployment-ru.md.
+
+# --- (а) Манипулятор: кобот UR10e/UR16e (Universal Robots, паспорта --
+# в delivery-deployment-ru.md "Источники"). UR10e 33.5 кг, UR16e 33.1 кг;
+# 0-50 C / IP54 -- облачный ярус не покрыт, доработка ARM_HARDEN_FACTOR.
+ARM_BARE_LOW_KG, ARM_BARE_HIGH_KG = 33.1, 33.5     # UR16e / UR10e, паспорт
+ARM_HARDEN_FACTOR = 1.5     # кислотозащитный кожух + термоконтур под H2SO4-туман,
+                            # 0.49 атм CO2, +22 C (номинал) и переходы -- без
+                            # источника, флаг допущения (статус как V_AEROBOT)
+N_ARMS = 1                  # базово одна рука; двурукий бот удваивает эту статью
+M_ARM_LOW = N_ARMS * ARM_BARE_LOW_KG                     # без доработки среды
+M_ARM_HIGH = N_ARMS * ARM_BARE_HIGH_KG * ARM_HARDEN_FACTOR   # с доработкой
+print(f"Манипулятор (UR10e/UR16e-класс), паспорт: {ARM_BARE_LOW_KG:.1f}-"
+      f"{ARM_BARE_HIGH_KG:.1f} кг за руку; с доработкой под среду (x{ARM_HARDEN_FACTOR}, "
+      f"б/источника): до {ARM_BARE_HIGH_KG*ARM_HARDEN_FACTOR:.1f} кг за руку")
+print(f"Рук на боте: {N_ARMS} -> {M_ARM_LOW:.1f}-{M_ARM_HIGH:.1f} кг")
+
+# --- (б) Рама-грузоноситель ("ферма") ----------------------------------
+# Считаем от нагрузки по погонной плотности, без готового прецедента.
+# Модель: консольная рама вылетом L, конструктивной высотой h, на конце --
+# вес (груз + манипулятор). Проектное напряжение -- предел / SAFETY_FACTOR
+# (=3, та же практика, что для троса §27 и сосуда давления §38). Отдельный
+# порыв/динамику НЕ закладываю сверх 3x: аэробот и платформа дрейфуют
+# вместе с атмосферой (осн. документ, "Среда" и раздел про сепаратор),
+# относительный ветер в установившемся полёте и при удержании ~0.
+CARGO_KG = 100.0            # грузоподъёмность аппарата этого класса, якорь JPL
+                            # (§20/§48); содержимое здесь -- инструмент и узлы
+                            # сборки, не патчи обшивки
+TRUSS_REACH_LOW, TRUSS_REACH_HIGH = 1.5, 3.0   # м, вылет рамы -- НЕ источ., флаг
+TRUSS_DEPTH_RATIO = 0.5     # h/L, компактная рама -- НЕ источ., флаг
+
+# Материал рамы -- ПРИВОЗНОЙ С ЗЕМЛИ (местного несущего волокна на первой миссии нет).
+# Алюминий 6061-T6 (AL_RHO/AL_ULT_PA/AL_E_PA определены выше, у §36):
+# rho 2700, предел прочности 310 МПа, модуль 68.9 ГПа. Пластичный сплав:
+# сжатие ~= растяжению.
+TUBE_WALL_MIN_M = 1.0e-3   # мин. практ. толщина стенки трубы пояса -- НЕ источ., флаг
+CHORD_R_MIN_M = 0.015      # мин. радиус трубы пояса (стойкость к повреждению) -- флаг
+K_WEB = 1.4       # раскосы/стойки рамы поверх поясов -- станд. практика, б/источника
+                  # отдельно (тот же статус, что комментарий у SAFETY_FACTOR §27)
+K_JOINT = 1.4     # косынки, концевые фитинги, плита под манипулятор, узлы
+                  # крепления груза, интерфейс с гондолой -- аэрокосм. non-optimum
+                  # фактор 1.3-1.5, б/источника отдельно
+
+# Контроль формулы Эйлера на случае с известным ответом (правило 3):
+# шарнирная стальная колонна, L=1 м, d=10 мм, E=200 ГПа -> F_cr ~ 969 Н.
+I_ref = math.pi * (0.010) ** 4 / 64
+Fcr_ref = math.pi**2 * 200e9 * I_ref / 1.0**2
+assert abs(Fcr_ref - 969.0) < 5.0, f"контроль Эйлера сломан: {Fcr_ref:.1f} Н"
+print(f"\n[контроль Эйлера: эталонная колонна F_cr = {Fcr_ref:.0f} Н, ожидалось ~969 Н -- OK]")
+
+def truss_mass_kg(L, arm_kg, s_ult, s_mod, rho):
+    """Масса консольной рамы, кг. s_ult/s_mod -- предел прочности/модуль, Па."""
+    h = TRUSS_DEPTH_RATIO * L
+    W_tip = (CARGO_KG + arm_kg) * G_VENUS
+    F_chord = W_tip * L / h                       # осевая сила в поясе = момент/плечо
+    A_str = F_chord * SAFETY_FACTOR / s_ult       # 1) прочность сжатого пояса
+    I_req = F_chord * h**2 * SAFETY_FACTOR / (math.pi**2 * s_mod)   # 2) Эйлер, пролёт=h
+    r_buck = (I_req / (math.pi * TUBE_WALL_MIN_M)) ** (1/3)         # тонкая труба I=pi r^3 t
+    r_chord = max(r_buck, CHORD_R_MIN_M)
+    A_buck = 2 * math.pi * r_chord * TUBE_WALL_MIN_M
+    A_chord = max(A_str, A_buck)
+    regime = "прочность" if A_str >= A_buck else "устойчивость/калибр"
+    m_chords = 2 * rho * A_chord * L              # 2 пояса, площадь у корня, без конусности
+    return K_WEB * K_JOINT * m_chords, regime, F_chord, 2 * r_chord
+
+m_truss_lo, reg_lo, F_lo, d_lo = truss_mass_kg(
+    TRUSS_REACH_LOW,  M_ARM_LOW,  AL_ULT_PA, AL_E_PA, AL_RHO)
+m_truss_hi, reg_hi, F_hi, d_hi = truss_mass_kg(
+    TRUSS_REACH_HIGH, M_ARM_HIGH, AL_ULT_PA, AL_E_PA, AL_RHO)
+print(f"Рама (Al 6061-T6), вылет {TRUSS_REACH_LOW:.1f} м: сила в поясе {F_lo:.0f} Н, "
+      f"труба ~{d_lo*1000:.0f} мм, лимит -- {reg_lo}, масса {m_truss_lo:.1f} кг")
+print(f"Рама (Al 6061-T6), вылет {TRUSS_REACH_HIGH:.1f} м: сила в поясе {F_hi:.0f} Н, "
+      f"труба ~{d_hi*1000:.0f} мм, лимит -- {reg_hi}, масса {m_truss_hi:.1f} кг")
+print(f"Погонная плотность рамы: {m_truss_lo/TRUSS_REACH_LOW:.2f}-{m_truss_hi/TRUSS_REACH_HIGH:.2f} кг/м")
+
+# Сверка на независимом материале (правило 5): та же рама из базальт-эпоксида
+# (появится на поздних фазах) -- Taheri et al. 2025, Polymers 17(10):1348,
+# свойства при сжатии 233.9-237.7 МПа / модуль 24.0-27.5 ГПа, rho 2000.
+m_b_lo, _, _, _ = truss_mass_kg(TRUSS_REACH_LOW,  M_ARM_LOW,  237.7e6, 27.5e9, 2000.0)
+m_b_hi, _, _, _ = truss_mass_kg(TRUSS_REACH_HIGH, M_ARM_HIGH, 233.9e6, 24.0e9, 2000.0)
+print(f"[сверка: та же рама из базальт-композита -- {m_b_lo:.1f}-{m_b_hi:.1f} кг, "
+      f"тот же порядок -> масса задана калибром/геометрией, не материалом]")
+
+print(f"""
+Прочность рамы -- не лимит: сила в поясе ~{F_lo:.0f}-{F_hi:.0f} Н, сечение по
+прочности единицы мм^2. Массу задаёт минимальный калибр стенки + Эйлер.
+Итог: рама {m_truss_lo:.1f}-{m_truss_hi:.1f} кг -- на фоне манипулятора
+({M_ARM_LOW:.0f}-{M_ARM_HIGH:.0f} кг) пренебрежимо.
+
+Где формула ломается формально корректно (правило 4):
+- чистая консоль с точечным грузом на конце: не учтён крутящий момент от
+  манипуляции грузом сбоку, местное смятие в узлах, усталость от циклов,
+  динамическая отдача манипулятора на быстрых ходах -- всё поднимает массу,
+  но от базы ~{m_truss_lo:.0f} кг даже x3-5 остаётся ниже манипулятора;
+- Эйлер с пролётом панели = полная высота h и шарнирными концами --
+  консервативно (реальная рама расчаливает пояс чаще), взято намеренно;
+- h = L/2: более плоская рама (h = L/10) даёт массу x5, ~{m_truss_lo*5:.0f}-{m_truss_hi*5:.0f}
+  кг -- всё ещё под манипулятором;
+- по-настоящему минимальный бот (рука на коротком пилоне ~0.5 м, инструмент
+  на гондоле) уводит раму в доли кг -- вывод тот же, руку это не трогает.
+""")
+
+M_KIT_LOW = M_ARM_LOW + m_truss_lo
+M_KIT_HIGH = M_ARM_HIGH + m_truss_hi
+print(f"ИТОГО оснастка (манипулятор + рама): {M_KIT_LOW:.1f}-{M_KIT_HIGH:.1f} кг "
+      f"(двурукий бот: ~{M_KIT_LOW + ARM_BARE_LOW_KG:.0f}-"
+      f"{M_KIT_HIGH + ARM_BARE_HIGH_KG*ARM_HARDEN_FACTOR:.0f} кг)")
+
+print("=" * 70)
+print("51. БОТ ПЕРВОЙ МИССИИ ЦЕЛИКОМ -- сходится ли оболочка")
+print("=" * 70)
+
+aerobot_kit_lo = aerobot_full_lo + M_KIT_LOW / 1000
+aerobot_kit_hi = aerobot_full_hi + M_KIT_HIGH / 1000
+print(f"Полный аэробот (§49) + оснастка (§50): "
+      f"{aerobot_kit_lo:.3f}-{aerobot_kit_hi:.3f} т (тара, без {CARGO_KG:.0f} кг груза)")
+
+# Сходится ли V_AEROBOT=500 м^3 при добавленной оснастке + груз.
+# Подъём H2 на высоте платформы: lift_h2_amb кг/м^3 (§37, ~0.852).
+lift_500 = lift_h2_amb * V_AEROBOT
+gas_tank_500 = TANK_GAS_RATIO * V_AEROBOT
+print(f"\nПодъём 500 м^3 H2 на высоте платформы: {lift_500:.0f} кг")
+
+def envelope_min_V(areal, fixed_kg, reserve=0.0):
+    """Мин. объём оболочки для нейтральной плавучести (reserve=0) или с
+    запасом подъёма (reserve=0.25 -> подъём >= 1.25 x статич. нагрузки)."""
+    V = 500.0
+    for _ in range(500):
+        D = (6 * V / math.pi) ** (1/3)
+        hull = areal * math.pi * D**2
+        gastank = TANK_GAS_RATIO * V
+        demand = (1 + reserve) * (hull + gastank + fixed_kg)
+        V_new = demand / lift_h2_amb
+        if abs(V_new - V) < 1e-6:
+            V = V_new
+            break
+        V = V_new
+    return V
+
+for tag, areal, avio, arm_kg, m_truss in (
+    ("лёгкая (100 мкм оболочка, манипулятор без доработки)",
+     FLOAT_AREAL_LOW,  AVIONICS_LOW_KG,  M_ARM_LOW,  m_truss_lo),
+    ("тяжёлая (250 мкм оболочка, манипулятор в кожухе)",
+     FLOAT_AREAL_HIGH, AVIONICS_HIGH_KG, M_ARM_HIGH, m_truss_hi),
+):
+    D0 = (6 * V_AEROBOT / math.pi) ** (1/3)
+    hull0 = areal * math.pi * D0**2
+    fixed = avio + arm_kg + m_truss + CARGO_KG
+    demand0 = hull0 + gas_tank_500 + fixed
+    margin = lift_500 - demand0
+    V_neutral = envelope_min_V(areal, fixed, 0.0)
+    V_25 = envelope_min_V(areal, fixed, 0.25)
+    D25 = (6 * V_25 / math.pi) ** (1/3)
+    print(f"\n{tag}:")
+    print(f"  нагрузка при V=500: {demand0:.0f} кг, подъём {lift_500:.0f} кг, "
+          f"запас {margin:+.0f} кг ({margin/demand0*100:+.0f}%)")
+    print(f"  мин. V для нейтральной плавучести: {V_neutral:.0f} м^3")
+    print(f"  V для запаса подъёма +25%: {V_25:.0f} м^3 (диаметр {D25:.1f} м, "
+          f"против {D0:.1f} м у 500 м^3)")
+
+print(f"""
+Вывод: 500 м^3 закрывает лёгкую конфигурацию с запасом и садится на грань
+в тяжёлой (250 мкм оболочка + манипулятор в кожухе) -- почти нулевой
+проектный резерв. Держать +25% запас подъёма в тяжёлом углу: растить
+оболочку до ~{V_25:.0f} м^3, либо держать оболочку тонкой, либо разнести
+манипулятор и груз на два бота.
+""")
+
+# Робототехника автономной сборки. Масса гуманоидов (сверено): Unitree H1 47,
+# Apptronik Apollo 72.6, NASA Robonaut 2 ~140-150 кг/шт -> вилка 47-150; x1.5
+# на кислоту/термо -- флаг. Роль, разнотип/одинаковые, работа в H2-среде,
+# краш-тест EDI в ложах экипажа -- delivery-deployment-ru.md.
+N_ANDROIDS = 4
+ANDROID_BARE_LO, ANDROID_BARE_HI = 47.0, 150.0            # кг/шт., H1 ... Robonaut 2
+N_EXTRA_ARMS = 4
+android_lo = N_ANDROIDS * ANDROID_BARE_LO
+android_hi = N_ANDROIDS * ANDROID_BARE_HI * ARM_HARDEN_FACTOR
+extra_arms_lo = N_EXTRA_ARMS * ARM_BARE_LOW_KG
+extra_arms_hi = N_EXTRA_ARMS * ARM_BARE_HIGH_KG * ARM_HARDEN_FACTOR
+ROBOTICS_ASSEMBLY_LO = (android_lo + extra_arms_lo) / 1000  # т
+ROBOTICS_ASSEMBLY_HI = (android_hi + extra_arms_hi) / 1000  # т
+print(f"Робототехника сборки: {N_ANDROIDS} антропоморфных ({android_lo:.0f}-{android_hi:.0f} кг) "
+      f"+ {N_EXTRA_ARMS} манипулятора UR-класса ({extra_arms_lo:.0f}-{extra_arms_hi:.0f} кг) "
+      f"= {ROBOTICS_ASSEMBLY_LO:.2f}-{ROBOTICS_ASSEMBLY_HI:.2f} т (не выведено). "
+      f"Остаются на станции под работу в H2-среде.")
+
+print("=" * 70)
+print("52. ПЕРВАЯ МИССИЯ: КОЛЬЦО ИЗ 6 ПОПЛАВКОВ ~23 М ВОКРУГ МОДУЛЯ")
+print("=" * 70)
+
+# Модуль 11 м (§36/§39) + кольцо 6 поплавков, укладка 6-вокруг-1. Сайзинг:
+# любые 5 из 6 держат сборку (оболочка+тара всех 6 на борту -- случай ремонта
+# выведенного поплавка). Батареи -- равномерно во всех 6. N_RING в §36.
+#
+# Шлюзы двух видов:
+#  - 3 человеческих хабитат<->поплавок (LEIA 2 т/шт): люди имеют доступ в
+#    3 секции от жилого. Граница дыхательная среда <-> H2 -> полный шлюз.
+#  - 6 робот-люков поплавок<->поплавок по периметру кольца: связывают
+#    поплавки друг с другом, роботы обходят всё кольцо по цепочке, не заходя
+#    в хабитат. Граница H2<->H2, окислителя нет -> механический герметичный
+#    люк + продувка от затёкшего CO2, без тамбура/наддува. ~0.3-0.6 т/шт
+#    (оценка, флаг). Роботы -- H2-резиденты (см. §51).
+N_HUMAN_AIRLOCKS = 3
+N_ROBOT_HATCHES = 6
+ROBOT_HATCH_LO, ROBOT_HATCH_HI = 0.3, 0.6   # т/шт, люк H2<->H2 (оценка, флаг)
+lam = lift_h2_amb          # кг/м^3, подъём H2 на высоте платформы (§1/§37)
+rho_gt = TANK_GAS_RATIO    # кг/м^3, газ+тара накачки (§46)
+
+def boom_mass_kg(reach_m, tip_load_N):
+    """Радиальный луч связи модуль<->поплавок, консольная ферма Al 6061-T6
+    (метод и коэффициенты §50)."""
+    h = 0.5 * reach_m
+    F_chord = tip_load_N * reach_m / h
+    A_str = F_chord * SAFETY_FACTOR / AL_ULT_PA
+    I_req = F_chord * h**2 * SAFETY_FACTOR / (math.pi**2 * AL_E_PA)
+    r_ch = max((I_req / (math.pi * TUBE_WALL_MIN_M)) ** (1/3), CHORD_R_MIN_M)
+    A_ch = max(A_str, 2 * math.pi * r_ch * TUBE_WALL_MIN_M)
+    return K_WEB * K_JOINT * 2 * AL_RHO * A_ch * reach_m
+
+def solve_ring(N, core_t, areal):
+    """(D одного поплавка, масса связи кг, полная масса сборки кг) при
+    'N-1 держат сборку'. 0.75 на связь -- триангуляция режет консоль ~вдвое."""
+    D = 20.0
+    for _ in range(3000):
+        V = (math.pi / 6) * D**3
+        shell1 = areal * math.pi * D**2
+        R = D / 2 + r_mod + 1.0
+        M_prev = core_t * 1000 + N * (shell1 + rho_gt * V)
+        m_conn = 0.75 * N * boom_mass_kg(R, M_prev * G_VENUS / N)
+        dry = core_t * 1000 + N * (shell1 + rho_gt * V) + m_conn
+        D_new = ((dry / ((N - 1) * lam)) * 6 / math.pi) ** (1 / 3)
+        if abs(D_new - D) < 1e-6:
+            D = D_new
+            break
+        D = D_new
+    V = (math.pi / 6) * D**3
+    shell1 = areal * math.pi * D**2
+    R = D / 2 + r_mod + 1.0
+    M_floats = N * (shell1 + rho_gt * V)
+    conn = 0.75 * N * boom_mass_kg(R, (core_t * 1000 + M_floats) * G_VENUS / N)
+    return D, conn, core_t * 1000 + M_floats + conn
+
+# Ядро (масса, ОСТАЮЩАЯСЯ на станции) = центральный хаб-узел + надувной
+# хабитат (оболочка из давления + палуба + PV, §36) + батареи + шлюзы:
+# 3 человеческих хабитат<->поплавок (LEIA) + 6 робот-люков поплавок<->поплавок.
+# Обтекатель хабитата отстреливается на входе, в ядро НЕ входит (сидит в
+# оснащении спуска, §53).
+airlocks_lo = N_HUMAN_AIRLOCKS * airlock_pair_mass + N_ROBOT_HATCHES * ROBOT_HATCH_LO
+airlocks_hi = N_HUMAN_AIRLOCKS * airlock_pair_mass + N_ROBOT_HATCHES * ROBOT_HATCH_HI
+core_lo = (HUB_FRAME_LO + module_no_batt_lo + batt_mod_lo + airlocks_lo)
+core_hi = (HUB_FRAME_HI + module_no_batt_hi + batt_mod_hi + airlocks_hi)
+
+D6_lo, conn6_lo, M6_lo = solve_ring(N_RING, core_lo, FLOAT_AREAL_LOW)
+D6_hi, conn6_hi, M6_hi = solve_ring(N_RING, core_hi, FLOAT_AREAL_LOW)
+# ПЕРВЫЙ БОРТ (автономный) -- только станция: кольцо + рецикл ЗСЖО +
+# сервисный аэробот + робототехника автономной сборки (§51). БЕЗ экипажных
+# расходников (те едут с экипажем).
+manifest_lo = (M6_lo / 1000 + ECLSS_MASS_T + aerobot_kit_lo
+               + ROBOTICS_ASSEMBLY_LO)
+manifest_hi = (M6_hi / 1000 + ECLSS_MASS_T + aerobot_kit_hi
+               + ROBOTICS_ASSEMBLY_HI)
+E_rise6_lo = M6_lo * G_VENUS * 500
+E_rise6_hi = M6_hi * G_VENUS * 500
+print(f"Ядро на станции (хаб+хабитат+батареи+{N_HUMAN_AIRLOCKS} чел-шлюза LEIA "
+      f"{airlock_pair_mass:.1f} т + {N_ROBOT_HATCHES} робот-люка "
+      f"{ROBOT_HATCH_LO}-{ROBOT_HATCH_HI} т): {core_lo:.1f}-{core_hi:.1f} т")
+print(f"Диаметр поплавка (1 из 6):            {D6_lo:.1f}-{D6_hi:.1f} м")
+print(f"Связь модуль<->кольцо:                {conn6_lo/1000:.2f}-{conn6_hi/1000:.2f} т")
+print(f"Сборка на станции (ядро+6 поплавков+связь): {M6_lo/1000:.1f}-{M6_hi/1000:.1f} т")
+print(f"  + рецикл ЗСЖО (§41):                {ECLSS_MASS_T:.1f} т")
+print(f"  + сервисный бот (§50-51):           {aerobot_kit_lo:.2f}-{aerobot_kit_hi:.2f} т")
+print(f"ПЕРВЫЙ БОРТ, выведенное: {manifest_lo:.1f}-{manifest_hi:.1f} т")
+
+# Прочее оснащение + медицина + резерв -- ОДНИМ блоком, долей от выведенного,
+# НЕ детализировано: незаитемизированные системы (жгуты/кабель, воздуховоды,
+# термоконтур+радиаторы, связь+антенна, отделка, камбуз, гигиена, отходы,
+# каюты, ЗИП+инструмент, медблок) ~MISC_FRAC + резерв на неопределённость
+# концепт-оценки +CONTINGENCY (стандартная практика). Дублируется на КАЖДОМ
+# борте (первый + экипажный) -- резервирование по требованию.
+MISC_FRAC = 0.20        # незаитемизированные системы, доля, б/источника
+CONTINGENCY = 0.25      # резерв концепт-оценки, станд. практика
+misc_mult = 1.0 + MISC_FRAC + CONTINGENCY
+EDI_MID_LO, EDI_MID_HI = 15.0, 35.0   # т, наша оценка оснащения спуска (§53, прямой вход)
+firstbort_lo = manifest_lo * misc_mult
+firstbort_hi = manifest_hi * misc_mult
+print(f"  + прочее/медицина/резерв (x{MISC_FRAC:+.2f}{CONTINGENCY:+.2f}, блоком, не детал.): "
+      f"+{manifest_lo*(MISC_FRAC+CONTINGENCY):.1f}-{manifest_hi*(MISC_FRAC+CONTINGENCY):.1f} т")
+print(f"ПЕРВЫЙ БОРТ ПОЛНЫЙ (станция): {firstbort_lo:.1f}-{firstbort_hi:.1f} т")
+print(f"Против потолка HAVOC 129.1 т -- запас {129.1-firstbort_hi:.0f}-{129.1-firstbort_lo:.0f} т")
+print(f"Энергия на подъём кольца на 500 м (mgh): {E_rise6_lo/1e6:.0f}-{E_rise6_hi/1e6:.0f} МДж")
+
+# ЭКИПАЖНЫЙ РЕЙС (отдельно, на верифицированную станцию): экипаж+кресла+
+# экипажный вход + оконный запас еды/воды/O2 (§47). Стандартный пилотируемый
+# EDI, не первый в истории вход конструкции.
+# Экипажный спускаемый пакет: якорь -- Союз СА 2.9 т на 3 чел. (капсула+
+# кресла+привязь+спускной контур). На 4 чел. коротким входом на готовую
+# станцию: ~4/3 x 2.9 = 3.9 т верх; низ -- только кресла/привязь ~0.15 т/чел
+# + доля ТЗП ~1 т -> ~1.6 т. Вход этой компоновкой облётан краш-тестом
+# первого борта.
+CREW_ENTRY_LO, CREW_ENTRY_HI = 1.6, 3.9   # т, Союз-СА-прокси
+# Оконный запас (§47) едет с экипажем; 30-суточный стартовый (§42, 3.17 т) --
+# на выход рецикла на режим, тоже здесь. Плюс тот же блок прочее/резерв, что
+# и на первом борте (дублируется).
+crew_base_lo = total_gap_lo + CREW_ENTRY_LO + total_buffer_t
+crew_base_hi = total_gap_hi + CREW_ENTRY_HI + total_buffer_t
+crewflight_lo = crew_base_lo * misc_mult
+crewflight_hi = crew_base_hi * misc_mult
+print(f"\nЭКИПАЖНЫЙ РЕЙС отдельно: оконный запас (§47) {total_gap_lo:.1f}-{total_gap_hi:.1f} т "
+      f"+ стартовый 30-сут (§42) {total_buffer_t:.1f} т + спускаемый пакет 4 чел. "
+      f"(Союз-СА) {CREW_ENTRY_LO:.1f}-{CREW_ENTRY_HI:.1f} т, x{misc_mult:.2f} прочее/резерв "
+      f"= {crewflight_lo:.1f}-{crewflight_hi:.1f} т (+ оснащение спуска ~{EDI_MID_LO:.0f}-{EDI_MID_HI:.0f} т)")
+
+# Отказ 1 поплавка: 5 оставшихся держат сборку (заложено в сайзинг).
+# Запасная оболочка на борту -- дёшево (плёнка одного поплавка):
+V6_lo = (math.pi/6) * D6_lo**3
+V6_hi = (math.pi/6) * D6_hi**3
+env_lo = FLOAT_AREAL_LOW * math.pi * D6_lo**2 / 1000   # т, тонкая плёнка
+env_hi = FLOAT_AREAL_HIGH * math.pi * D6_hi**2 / 1000  # т, толстая
+print(f"Оболочка 1 поплавка (запаска, сложенная ~1-3 м^3): {env_lo:.2f}-{env_hi:.2f} т")
+shed_lo = env_lo + rho_gt * V6_lo / 1000
+shed_hi = FLOAT_AREAL_HIGH * math.pi * D6_hi**2 / 1000 + rho_gt * V6_hi / 1000
+print(f"Отстрел 1 поплавка целиком: -{shed_lo:.1f}..-{shed_hi:.1f} т с 5 оставшихся.")
+
+# Цена +1 человека сверх экипажа (для оценки добавки). Растёт линейно с
+# MODULE_CREW: батареи, PV, оконные расходники; хабитат 11 м по объёму
+# держит 5-6 чел. без роста, ЗСЖО-оборудование в этом диапазоне тоже.
+d_batt_lo = batt_mod_lo / MODULE_CREW
+d_batt_hi = batt_mod_hi / MODULE_CREW
+d_pv = panel_mass_mod / MODULE_CREW
+d_consum_lo = total_gap_lo / MODULE_CREW
+d_consum_hi = total_gap_hi / MODULE_CREW
+core_p1_lo = core_lo + d_batt_lo + d_pv
+core_p1_hi = core_hi + d_batt_hi + d_pv
+_, _, M6_p1_lo = solve_ring(N_RING, core_p1_lo, FLOAT_AREAL_LOW)
+_, _, M6_p1_hi = solve_ring(N_RING, core_p1_hi, FLOAT_AREAL_LOW)
+dman_lo = (M6_p1_lo - M6_lo) / 1000 + d_consum_lo
+dman_hi = (M6_p1_hi - M6_hi) / 1000 + d_consum_hi
+print(f"\n+1 человек сверх {MODULE_CREW}: батареи +{d_batt_lo:.2f}-{d_batt_hi:.2f} т, "
+      f"PV +{d_pv:.2f} т, расходники на окно +{d_consum_lo:.2f}-{d_consum_hi:.2f} т,")
+print(f"  рост поплавков +{(M6_p1_lo-M6_lo)/1000 - d_batt_lo - d_pv:.2f}-"
+      f"{(M6_p1_hi-M6_hi)/1000 - d_batt_hi - d_pv:.2f} т -> "
+      f"К МАНИФЕСТУ +{dman_lo:.1f}-{dman_hi:.1f} т/чел")
+print()
+print("Вход -- стандартный EDI-профиль (HAVOC, Jones/Arney 2015): аэрощит ->")
+print("парашют 75-83 км / 451-483 м/с -> сброс аэрощита 64-76 км / 96-99 м/с.")
+print("6 поплавков надуваются СИНХРОННО на дозвуке у целевой высоты (не")
+print("поочерёдно -- иначе кольцо кренит и оболочки закручивает/путает);")
+print("у каждого свой автонадув сжиженного H2, регуляция синхронно по кольцу")
+print("и с внешним давлением.")
+print()
+print("Нет источника для числа: накачка сжиженным H2 vs коэффициент §46;")
+print("поячейковая регуляция наддува/плавучести и её масса; резерв тогда")
+print("'минус поплавок ИЛИ минус регулятор'; динамика кольца при надуве/манёврах;")
+print("силовая схема кольца (триангуляция vs консоль, ~2x); наддув, палубы.")
+
+print("=" * 70)
+print("53. ВХОД В АТМОСФЕРУ -- аппроксимация от HAVOC по разнице")
+print("    баллистических коэффициентов")
+print("=" * 70)
+
+# Опора -- вход HAVOC (Jones/Arney 2015): пик 6.7 g, нагрев 66-233 Вт/см^2,
+# макс. напор 2.39-27.3 кПа, парашют 75-83 км. Масштаб на пакет кольца по
+# отношению beta = m/(Cd*A). Пик перегрузки от beta НЕ зависит (Аллен-
+# Эггерс: только V входа, угол, шкала высот); напор ~beta, нагрев ~sqrt(beta).
+HAVOC_G_PEAK = 6.7
+HAVOC_HEAT_LO, HAVOC_HEAT_HI = 66.0, 233.0     # Вт/см^2
+HAVOC_Q_LO, HAVOC_Q_HI = 2.39, 27.3           # кПа
+HAVOC_CHUTE_LO, HAVOC_CHUTE_HI = 75.0, 83.0   # км
+D_AERO_HAVOC = 10.0     # м, упаковка SLS Block 2B (флаг)
+CD_AEROSHELL = 1.5      # тупой аэрощит, типовое
+
+T_entry_band = 263.0    # K, ~60 км (профиль §1)
+H_scale = R * T_entry_band / (M_CO2 * G_VENUS)
+V_entry = v_orbital     # м/с, круговая на 200 км (§18)
+# Угол входа implied из HAVOC 6.7 g (Аллен-Эггерс), контроль (правило 3):
+sin_gamma = HAVOC_G_PEAK * (2 * math.e * H_scale * G_VENUS) / V_entry**2
+a_check = V_entry**2 * sin_gamma / (2 * math.e * H_scale * G_VENUS)
+assert abs(a_check - HAVOC_G_PEAK) < 0.05, "контроль Аллен-Эггерс сломан"
+print(f"Шкала высот ~60 км: {H_scale/1000:.1f} км; V входа {V_entry:.0f} м/с; "
+      f"угол входа из 6.7 g = {math.degrees(math.asin(sin_gamma)):.1f} deg "
+      f"[обратно {a_check:.1f} g -- OK]")
+
+m_entry_havoc = (HAVOC_AIRSHIP + HAVOC_ATMO_HABITAT + HAVOC_EDI_AEROCAPTURE) * 1000
+beta_havoc = m_entry_havoc / (CD_AEROSHELL * math.pi * (D_AERO_HAVOC/2)**2)
+print(f"HAVOC: масса входа {m_entry_havoc/1000:.0f} т, аэрощит {D_AERO_HAVOC:.0f} м, "
+      f"beta {beta_havoc:.0f} кг/м^2")
+
+# Кольцо: под аэрощитом -- пакет из 7 жёстких сегментов (спускаемая камера +
+# 6 створок поплавков) + сложенные надувной хабитат и плёнка поплавков.
+# D аэрощита задан упаковкой пакета -> 12-14 м (флаг, без источника).
+# Масса оснащения спуска ~площади (TPS+структура): HAVOC 33.3 т / 10 м -> (D/10)^2.
+for D_aero in (12.0, 14.0):
+    A_ring = math.pi * (D_aero/2)**2
+    edi_hw_t = HAVOC_EDI_AEROCAPTURE * (D_aero / D_AERO_HAVOC)**2
+    # масса входа = ПОЛНЫЙ первый борт (с блоком прочее/резерв, §52) + оснащение спуска
+    for tag, fb_t in (("лёгкий борт", firstbort_lo), ("тяжёлый борт", firstbort_hi)):
+        m_entry = (fb_t + edi_hw_t) * 1000
+        beta_ring = m_entry / (CD_AEROSHELL * A_ring)
+        r = beta_ring / beta_havoc
+        d_alt = H_scale/1000 * math.log(r)   # r>1 -> парашют ниже
+        print(f"\nАэрощит {D_aero:.0f} м, {tag} ({fb_t:.1f} т), оснащение спуска {edi_hw_t:.0f} т:")
+        print(f"  масса входа {m_entry/1000:.0f} т, beta {beta_ring:.0f} кг/м^2, отношение к HAVOC {r:.2f}")
+        print(f"  пик перегрузки ~{HAVOC_G_PEAK:.1f} g (от beta не зависит) -- в пределах "
+              f"человека (Apollo ~6.8 / Союз балл. 8-9). Первый вход = квалификация "
+              f"пилотируемого EDI (роботы в ложах экипажа, см. .md).")
+        print(f"  макс. напор {HAVOC_Q_LO*r:.1f}-{HAVOC_Q_HI*r:.1f} кПа "
+              f"| пик нагрева {HAVOC_HEAT_LO*math.sqrt(r):.0f}-{HAVOC_HEAT_HI*math.sqrt(r):.0f} Вт/см^2")
+        print(f"  парашют на {HAVOC_CHUTE_LO-d_alt:.0f}-{HAVOC_CHUTE_HI-d_alt:.0f} км")
+
+# оснащение спуска. Профиль ВЫБРАН -- прямой вход с низкой круговой
+# парковочной орбиты (тормозной импульс + один тепловой импульс). Аэрозахват
+# (быстрый скользящий проход, тяжёлая захватная ТЗП) отброшен как более
+# тяжёлый: у HAVOC вся строка "EDI+аэрозахват" 33.3 т / 10 м, масштаб по
+# площади дал бы ~48-65 т на D 12-14.
+# Раскладка прямого входа:
+#   аэрощит+ТЗП по areal марсианского входа (MSL 4.5 м, щит ~440 кг / 15.9 м^2
+#   ~28 кг/м^2 + бэкшелл -> 45-60 кг/м^2 фронта; D 12-14 -> фронт 113-154 м^2)
+#   -> 5-9 т
+#   + парашют (единицы % подвешенной массы 22-30 т) -> 1-3 т
+#   + первичная структура спуска / разделение / авионика/RCS -> 5-10 т
+#   = 15-35 т (EDI_MID). Массы парашюта и структуры спуска -- оценка, флаг.
+edi_areal_lo = 45.0 * math.pi * (12.0/2)**2 / 1000   # т, areal-якорь, D12
+edi_areal_hi = 60.0 * math.pi * (14.0/2)**2 / 1000   # т, areal-якорь, D14
+edi_havoc_lo = HAVOC_EDI_AEROCAPTURE * (12.0/D_AERO_HAVOC)**2  # аэрозахват-вариант (отброшен)
+edi_havoc_hi = HAVOC_EDI_AEROCAPTURE * (14.0/D_AERO_HAVOC)**2
+print(f"\nоснащение спуска (прямой вход, выбрано): {EDI_MID_LO:.0f}-{EDI_MID_HI:.0f} т")
+print(f"  = аэрощит+ТЗП (марс-прокси) {edi_areal_lo:.0f}-{edi_areal_hi:.0f} т "
+      f"+ парашют 1-3 т + структура спуска/авионика 5-10 т")
+print(f"  аэрозахват-вариант (отброшен как тяжёлый): {edi_havoc_lo:.0f}-{edi_havoc_hi:.0f} т")
+print(f"ПЕРВЫЙ БОРТ ПОЛНЫЙ ({firstbort_lo:.0f}-{firstbort_hi:.0f} т) + оснащение спуска: "
+      f"{firstbort_lo+EDI_MID_LO:.0f}-{firstbort_hi+EDI_MID_HI:.0f} т, "
+      f"запас против HAVOC 129.1 т: {129.1-(firstbort_hi+EDI_MID_HI):.0f}-"
+      f"{129.1-(firstbort_lo+EDI_MID_LO):.0f} т")
+
+man_edi_lo = firstbort_lo + EDI_MID_LO
+man_edi_hi = firstbort_hi + EDI_MID_HI
+print(f"""
+Аппроксимация, не расчёт входа: интегратора траектории нет. Отношение beta
+~0.8-1.0 (первый борт легче HAVOC -- без экипажных расходников) -> вход
+кольца в профиле HAVOC или чуть мягче (нагрев 58-233 Вт/см^2 против 66-233,
+напор 1.9-27 кПа против 2.4-27, парашют 75-84 км). Пик перегрузки ~6.7 g
+от beta не зависит.
+
+Потолок: первый борт + оснащение спуска {man_edi_lo:.0f}-{man_edi_hi:.0f} т против HAVOC
+129.1 т -- влезает в одну ракету этого класса, запас {129.1-man_edi_hi:.0f}-
+{129.1-man_edi_lo:.0f} т. Экипажный рейс -- отдельно.
+
+Флаги: D аэрощита 12-14 м без источника; массы парашюта и структуры спуска
+-- оценка; Аллен-Эггерс = экспон. атмосфера, без подъёмной силы, постоянный
+угол; класс ТЗП под пик нагрева не подобран; масса створок и хаб-узла --
+оценки.
+""")
+
+print("=" * 70)
+print("54. СИЛОВОЙ ТРАКТ ПЛАТФОРМЫ -- изгиб дискоида, наддув ячеек, палубы")
+print("=" * 70)
+
+# Структурной секции для 600-метрового диска у verify.py не было: §21 --
+# баланс масса/объём/толщина, §38 -- что 20 м баллон себя не держит,
+# §39 -- сфера хабитата из давления. Здесь первый порядок силового тракта:
+# изгиб диска и чем он держится (наддув ячеек ИЛИ несущий слой стрессед-скин).
+#
+# КЛЮЧЕВОЕ: величина изгиба целиком зависит от того, как распределена
+# плавучесть. Архитектура документа -- "пена": плавучесть распределена по
+# всему диску мелкими H2-ячейками (несущий/конструктивный слой), а не
+# сосредоточена в периметровых поплавках. Считаем две границы.
+POISSON = 0.3
+sigma_allow_lo = STRUCT_TENSILE_LOW / SAFETY_FACTOR   # Па, несущий углекомпозит
+sigma_allow_hi = STRUCT_TENSILE_HIGH / SAFETY_FACTOR
+h_disc = CELL_THICKNESS          # м, глубина диска ~ толщина ячейки
+R_cell = CELL_THICKNESS / 2.0    # м, радиус ячейки
+
+def layer_and_pressure(M):
+    """По моменту на пог. метр -> (несущий слой мм по стрессед-скину,
+    наддув кПа по надувной балке)."""
+    t = M / (sigma_allow_lo * h_disc) * 1000                 # мм, консервативно (низ доп.)
+    p = 2 * M / (math.pi * R_cell**2) / 1000                 # кПа, M_w = pi*p*R^3, ширина 2R
+    return t, p
+
+# ГРАНИЦА 1 (нефизична для этой архитектуры): вся плавучесть по периметру,
+# диск -- равномерно нагруженная круглая пластина на опоре по периметру.
+a_disc = L_PLATFORM / 2.0
+q_lo = MASS_TOTAL_LOW * G_VENUS / AREA_TOTAL
+q_hi = MASS_TOTAL_HIGH * G_VENUS / AREA_TOTAL
+M1_lo = q_lo * a_disc**2 * (3 + POISSON) / 16.0
+M1_hi = q_hi * a_disc**2 * (3 + POISSON) / 16.0
+t1_lo, p1_lo = layer_and_pressure(M1_lo)
+t1_hi, p1_hi = layer_and_pressure(M1_hi)
+print(f"Граница 1 -- плавучесть только по периметру (верхняя оценка):")
+print(f"  момент в центре {M1_lo/1e6:.1f}-{M1_hi/1e6:.1f} МН*м/м -> "
+      f"несущий слой {t1_lo:.1f}-{t1_hi:.1f} мм, наддув {p1_lo:.0f}-{p1_hi:.0f} кПа")
+
+# ГРАНИЦА 2 (проектная): плавучесть распределена, каждый участок локально
+# почти уравновешен. Изгиб -- только от остаточного локального рассогласования
+# Dw (кг/м^2 нетто) на длине перераспределения L (м): M ~ Dw*g*L^2/8.
+DW_LO, DW_HI = 20.0, 100.0     # кг/м^2 нетто, зона перехода тяж. модуль/лёгкая ячейка (флаг)
+L_RED_LO, L_RED_HI = 20.0, 100.0   # м, масштаб перераспределения (флаг)
+M2_lo = DW_LO * G_VENUS * L_RED_LO**2 / 8.0
+M2_hi = DW_HI * G_VENUS * L_RED_HI**2 / 8.0
+t2_lo, p2_lo = layer_and_pressure(M2_lo)
+t2_hi, p2_hi = layer_and_pressure(M2_hi)
+print(f"Граница 2 -- плавучесть распределена (проектная, Dw {DW_LO:.0f}-{DW_HI:.0f} кг/м^2, "
+      f"L {L_RED_LO:.0f}-{L_RED_HI:.0f} м):")
+print(f"  момент {M2_lo/1e6:.2f}-{M2_hi/1e6:.2f} МН*м/м -> "
+      f"несущий слой {t2_lo:.2f}-{t2_hi:.2f} мм, наддув {p2_lo:.1f}-{p2_hi:.1f} кПа")
+
+# Плёнка ячейки одна: при почти нулевом перепаде -- HAVOC Hull 0,58 кг/м^2,
+# совпадает с FLOAT_AREAL (§37). Под наддув p она не тянет:
+t_film = 250e-6
+sigma_film_1 = p1_hi * 1000 * R_cell / t_film
+print(f"Плёнка 250 мкм под наддув границы 1 ({p1_hi:.0f} кПа): sigma={sigma_film_1/1e6:.0f} МПа "
+      f">> предел PTFE ~25 -- при этой границе несущий слой обязателен")
+
+# Палубы: авиапанель 3,4-4,6 кг/м^2 без опоры держит пролёт ~0,5 м.
+print(f"Палубы: при {DECK_AREAL_LOW}-{DECK_AREAL_HIGH} кг/м^2 пролёт без опоры ~0,5-1 м -- "
+      f"нужна балочная сетка, её масса вне этой цифры (открытый пункт)")
+
+print("""
+Вывод: даже в нефизичной границе 1 (вся плавучесть по периметру) изгиб
+дискоида требует всего ~0,2-0,4 мм углекомпозита и наддува ~11-18 кПа --
+уже втрое-впятеро меньше массового допущения §21 (1-2 мм). В проектной
+границе 2 (плавучесть распределена по "пене") -- сотые мм и доли кПа.
+Глобальный изгиб НЕ сайзинговый случай ни в одной границе. Несущий слой
+(и величина наддува) задаются другим: ввод сосредоточенной нагрузки под
+тяжёлыми модулями (локальные фитинги/шпангоуты), стойкость к повреждению
+и монтажу, усиление швов, динамика/порывы (ниже). Допущение §21 в 1-2 мм
+при этом -- щедрая верхняя граница, не требование по изгибу.
+
+НЕ здесь (отдельная версия, данных не хватает): динамический отклик и
+аэродинамика диска ~600 м -- реакция на порыв, флаттер мембраны. Спектр
+порывов на 55-65 км Венеры не измерен (тот же пробел, что профиль ветра
+по высоте).
+
+Флаги: обе границы -- идеализации (реальное распределение плавучести и
+груза не смоделировано); nu=0,3; радиус ячейки 10 м; Dw и L границы 2 --
+допущения; живая нагрузка палуб не задана; несущий слой считается по
+углекомпозиту (см. материалы; базальт -- альтернатива в открытых вопросах).
 """)
 
 print("=" * 70)

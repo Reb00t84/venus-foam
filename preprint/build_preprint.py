@@ -14,12 +14,16 @@ venus-foam-ru.md; английский (перевод, базовое имя ф
 Что делает:
 1. Первая строка '# Заголовок' переносится в YAML title pandoc -> центрированный
    тайтл. Автор/дата не угадываются из текста — их в исходниках проекта нет.
-2. Фигуры: подпись вида 'Рис. N.' / 'Fig. N.' ищется в тексте; если в
-   FIG_FILES есть файл под этим номером — картинка вставляется НАД
-   подписью. Для --en берётся {имя}-en.pdf вместо {имя}.pdf, если он
-   существует, иначе — {имя}.pdf как есть (график без переведённых
-   подписей лучше, чем отсутствие графика). Файла нет вообще — фигура не
-   встраивается, без падения скрипта, это печатается в консоль.
+2. Фигуры: маркер '<!-- fig:N -->' + СЛЕДУЮЩАЯ строка (подпись 'Рис. N. ...'
+   / 'Fig. N. ...') ищутся в тексте; если в FIG_FILES есть файл под этим
+   номером — на место этих двух строк вставляется figure[H] (пакет float):
+   картинка по центру, под ней подпись обычным абзацем дока (тот же
+   размер/цвет, без caption-пакета). Блок неразрывен и стоит строго на
+   месте — подпись всегда на одной странице с картинкой. На самой картинке
+   текста подписи нет. Для ru-сборки берётся {имя}-ru.pdf с откатом на
+   {имя}.pdf (англ.), если ru-варианта нет; для --en — сразу {имя}.pdf.
+   Файла нет вообще — фигура не встраивается, без падения скрипта, это
+   печатается в консоль.
 3. NEEDSPACE_ANCHORS ниже — пустой по умолчанию; если появится таблица,
    которую нельзя рвать по странице, добавить сюда её первую строку дословно.
 4. pandoc -f markdown+autolink_bare_uris (голые URL -> \\url, xurl их переносит).
@@ -54,23 +58,36 @@ def find_xelatex():
     sys.exit('xelatex не найден ни в PATH, ни в известных локальных путях TeX Live')
 
 
-# Номер подписи "Рис. N." -> имя файла (без .pdf), лежащего рядом с исходником.
+# Номер маркера "<!-- fig:N -->" -> имя файла (без .pdf), лежащего рядом с исходником.
 FIG_FILES = {
     1: 'atmosphere-profile',
     2: 'platform-cross-section',
     3: 'platform-topdown',
     4: 'airlock-docking',
     5: 'energy-balance',
-    6: 'battery-divergence',
+    6: 'deployment-sequence',
     7: 'radiation-shielding',
 }
 FIG_EXTS = ('.pdf', '.jpg', '.jpeg', '.png')  # порядок = приоритет при поиске файла
 
-# Первая строка таблиц/блоков, которые нельзя рвать по границе страницы.
-# Пусто по умолчанию — заполнить при появлении такой таблицы в документе.
-NEEDSPACE_ANCHORS = []
-FIG_WIDTH = '80%'
-FIG_CAPTION_RE = re.compile(r'(?:^|\n)(?:Рис|Fig)\. (\d+)\.')
+# Первая строка (дословно) таблиц, которые нельзя рвать по границе страницы:
+# перед ней вставляется \needspace, и таблица целиком уезжает на следующую
+# страницу, если не влезает. По одной записи на язык — для чужого языка
+# строка просто не находится и пропускается. Держать здесь ВСЕ таблицы обоих
+# документов.
+NEEDSPACE_ANCHORS = [
+    '| Высота | Температура | Давление | Ветер |',      # профиль атмосферы, ru
+    '| Параметр | Значение |',                          # характеристики, ru
+    '| Altitude | Temperature | Pressure | Wind |',     # профиль атмосферы, en
+    '| Parameter | Value |',                            # характеристики, en
+]
+FIG_WIDTH = r'0.8\linewidth'
+# Маркер '<!-- fig:N -->' и сразу СЛЕДУЮЩАЯ строка — подпись ('Рис. N. ...' /
+# 'Fig. N. ...'). Картинка и подпись кладутся в один float figure: подпись —
+# обычным текстом дока (тот же размер/цвет, без caption-пакета), разрыва
+# страницы между картинкой и её подписью быть не может, а текст вокруг
+# заполняет страницу (не остаётся полупустых листов, как было бы у minipage/[H]).
+FIG_ANCHOR_RE = re.compile(r'<!-- fig:(\d+) -->\n(.+)')
 
 
 def run(cmd, **kw):
@@ -128,9 +145,10 @@ def main():
     # Базовое имя файла фигуры -- английский текст на самой картинке (график,
     # подписи осей, легенда); '-ru' суффикс -- русский вариант. Для ru-сборки
     # ищем сначала -ru, откатываемся на базовый (англ.), если ru-варианта нет.
-    for m in FIG_CAPTION_RE.finditer(body):
+    for m in FIG_ANCHOR_RE.finditer(body):
         num = int(m.group(1))
-        cap = m.group(0).lstrip('\n')
+        anchor = m.group(0)
+        caption = m.group(2).strip()
         name = FIG_FILES.get(num)
         fig_file = None
         if name:
@@ -142,17 +160,32 @@ def main():
                     fig_file = path
                     break
         if fig_file:
-            extra = '```{=latex}\n\\vspace{3em}\n```\n\n' if num == 5 else ''
-            pic = (f'{extra}```{{=latex}}\n\\begin{{center}}\n```\n\n'
-                   f'![]({fig_file}){{width={FIG_WIDTH}}}\n\n'
-                   f'```{{=latex}}\n\\end{{center}}\n```\n\n{cap}')
-            body = body.replace(cap, pic, 1)
+            # Весь блок — один raw-latex figure[H]: картинка по центру, под ней
+            # подпись обычным абзацем дока. [H] (пакет float) держит блок строго
+            # на месте, без float-страниц; сам блок неразрывен, поэтому подпись
+            # всегда на одной странице с картинкой. height ограничивает самые
+            # высокие картинки (topdown), чтобы блок влезал и не гнал overfull.
+            # Спецсимволов LaTeX в подписях нет — вставляем как есть.
+            pic = (f'```{{=latex}}\n'
+                   f'\\begin{{figure}}[H]\n'
+                   f'{{\\centering\n'
+                   f'\\includegraphics[width={FIG_WIDTH},height=0.42\\textheight,'
+                   f'keepaspectratio]{{{fig_file}}}\\par}}\n'
+                   f'\\medskip\n'
+                   f'\\noindent {caption}\n'
+                   f'\\end{{figure}}\n'
+                   f'```\n')
+            body = body.replace(anchor, pic, 1)
         else:
             print(f'[инфо] нет файла для номера {num} — фигура не встроена')
 
+    # 7 baselineskip (~3 см) — с запасом больше, чем ~10-строчная таблица в
+    # \scriptsize (~1,7 см), но не настолько, чтобы гнать таблицу на новую
+    # страницу, когда места на текущей явно хватает. Поднять, если появится
+    # заметно более высокая защищаемая таблица.
     for a in NEEDSPACE_ANCHORS:
         if body.count(a) == 1:
-            body = body.replace(a, '\\needspace{18\\baselineskip}\n\n' + a)
+            body = body.replace(a, '\\needspace{7\\baselineskip}\n\n' + a)
 
     yaml = f'---\ntitle: "{title}"\n'
     if author:
@@ -162,12 +195,15 @@ def main():
     yaml += '---\n\n'
     open(build_md, 'w', encoding='utf-8').write(yaml + body)
 
-    header = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'header.tex')
+    hdr_dir = os.path.dirname(os.path.abspath(__file__))
+    header = os.path.join(hdr_dir, 'header.tex')
+    dedup = os.path.join(hdr_dir, 'dedup-notes.lua')
     cmd = ['pandoc', build_md, '-f', 'markdown+autolink_bare_uris', '-s', '-o', tex,
-           f'--pdf-engine={xelatex}', '-H', header,
+           f'--pdf-engine={xelatex}', '-H', header, '--lua-filter', dedup,
            '-V', 'mainfont=DejaVu Serif', '-V', 'sansfont=DejaVu Sans',
            '-V', 'monofont=DejaVu Sans Mono', '-V', 'fontsize=10pt',
-           '-V', 'geometry:margin=2cm', '-V', 'colorlinks=true']
+           '-V', 'geometry:margin=2cm', '-V', 'colorlinks=true',
+           '-V', 'linkcolor=blue', '-V', 'urlcolor=blue', '-V', 'citecolor=blue']
     if not en:
         cmd += ['-V', 'lang=ru']
     r = run(cmd)

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Генерирует 8 PDF-иллюстраций для сборки через build_preprint.py, каждую в
+Генерирует PDF-иллюстрации для сборки через build_preprint.py, каждую в
 двух языковых вариантах: atmosphere-profile, energy-balance,
-battery-divergence, radiation-shielding, platform-cross-section,
-platform-topdown, airlock-docking, cell-legend. Базовое имя файла (без
+deployment-sequence, radiation-shielding, platform-cross-section,
+platform-topdown, airlock-docking. Базовое имя файла (без
 суффикса) — английский текст на самой картинке (оси, легенда, заголовок);
 '-ru' суффикс — русский вариант. build_preprint.py ищет -ru для ru-сборки,
 откатывается на базовый (англ.), если ru-варианта нет.
@@ -84,55 +84,51 @@ S = {
         fig1_platform_point="platform\n22°C", fig1_xlabel_t="Temperature, °C",
         fig1_ylabel="Altitude, km", fig1_title_t="Temperature",
         fig1_xlabel_p="Pressure, atm (log scale)", fig1_title_p="Pressure",
-        fig1_suptitle="Venus atmosphere profile by altitude",
         fig2_gen="panel generation", fig2_demand="station load (2 MW)",
         fig2_ylabel_p="MW", fig2_title_p="Power",
         fig2_ylabel_b="MWh", fig2_xlabel_b="Cycle hours (0-60 day, 60-120 night)",
         fig2_title_b="Storage charge",
-        fig2_suptitle="Power balance: closed day/night cycle",
-        fig3_threshold="k = 1 (divergence threshold)",
-        fig3_low=" low\n insolation", fig3_high=" high\n insolation",
-        fig3_xlabel="Panel power density, W/m²",
-        fig3_ylabel="k (extra m² of battery per extra m² of panel)",
-        fig3_suptitle="Why full smoothing with batteries does not converge",
+        figdep_ylabel="Altitude, km", figdep_title="First-mission deployment",
+        figdep_phaseA="Phase A — deorbit burn, entry, descent",
+        figdep_phaseB="Phase B — module unfold and checkout",
+        figdep_stages=["deorbit burn → entry, ~6.7 g",
+                       "parachute, 75–83 km",
+                       "aeroshell jettison, 64–76 km",
+                       "synchronous inflation\nof 6 floats (H\u2082)",
+                       "buoyancy takes over,\nparachute released — 55.7 km",
+                       "habitat unfolds,\nstation verified"],
         fig4_labels=["Earth,\nsea level", "Airliner\naltitude\n(~11 km)",
                      "Platform\n(55.7 km)"],
         fig4_ylabel="Atmospheric column, g/cm²",
-        fig4_suptitle="Radiation shielding: atmospheric column overhead",
         fig5_sky="CO₂ 0.49 atm, 22°C", fig5_width="~600 m", fig5_height="up to ~20 m",
-        fig5_suptitle="Platform cross-section: cells by function",
         fig6_width="~600 m",
-        fig6_suptitle="Platform from above: zones under the panel skin",
         fig7_h2="H₂", fig7_o2="O₂+N₂ (habitat + production, shared environment)",
         fig7_leaf="leaf",
-        fig7_suptitle="Compartment docking: H₂ cell / habitat / production",
     ),
     "ru": dict(
         fig1_platform_point="платформа\n22°C", fig1_xlabel_t="Температура, °C",
         fig1_ylabel="Высота, км", fig1_title_t="Температура",
         fig1_xlabel_p="Давление, атм (лог. шкала)", fig1_title_p="Давление",
-        fig1_suptitle="Профиль атмосферы Венеры по высоте",
         fig2_gen="генерация панелей", fig2_demand="нагрузка станции (2 МВт)",
         fig2_ylabel_p="МВт", fig2_title_p="Мощность",
         fig2_ylabel_b="МВт·ч", fig2_xlabel_b="Часы цикла (0-60 день, 60-120 ночь)",
         fig2_title_b="Заряд накопителя",
-        fig2_suptitle="Энергобаланс: замкнутый цикл день/ночь",
-        fig3_threshold="k = 1 (порог расходимости)",
-        fig3_low=" низкая\n инсоляция", fig3_high=" высокая\n инсоляция",
-        fig3_xlabel="Плотность мощности панелей, Вт/м²",
-        fig3_ylabel="k (доп. м² батареи на доп. м² панели)",
-        fig3_suptitle="Почему полное сглаживание батареей не сходится",
+        figdep_ylabel="Высота, км", figdep_title="Развёртывание первой миссии",
+        figdep_phaseA="Фаза A — тормозной импульс, вход, спуск",
+        figdep_phaseB="Фаза B — раскрытие модуля и проверка",
+        figdep_stages=["тормозной импульс → вход, ~6,7 g",
+                       "парашют, 75–83 км",
+                       "сброс аэрощита, 64–76 км",
+                       "синхронный надув\n6 поплавков (H\u2082)",
+                       "перехват на плавучесть,\nпарашют отделён — 55,7 км",
+                       "раскрытие жилого модуля,\nпроверка станции"],
         fig4_labels=["Земля,\nуровень моря", "Высота\nавиаперелёта\n(~11 км)",
                      "Платформа\n(55,7 км)"],
         fig4_ylabel="Столб атмосферы, г/см²",
-        fig4_suptitle="Радиационное экранирование: столб атмосферы над точкой",
         fig5_sky="CO₂ 0,49 атм, 22°C", fig5_width="~600 м", fig5_height="до ~20 м",
-        fig5_suptitle="Продольный разрез платформы: ячейки по функции",
         fig6_width="~600 м",
-        fig6_suptitle="Платформа сверху: план зон под панельной обшивкой",
         fig7_h2="H₂", fig7_o2="O₂+N₂ (жилой + производственный, общая среда)",
         fig7_leaf="створка",
-        fig7_suptitle="Стыковка отсеков: H₂-ячейка / жилой / производственный",
     ),
 }
 
@@ -140,6 +136,9 @@ S = {
 def save(fig, base, lang):
     suffix = "" if lang == "en" else f"-{lang}"
     path = os.path.join(OUT, f"{base}{suffix}.pdf")
+    # Никакого текста подписи на самой картинке: описание живёт в .md как
+    # обычный текст дока, build_preprint.py держит его с картинкой на одной
+    # странице (см. FIG_ANCHOR_RE / minipage там).
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
     print(f"wrote {path}")
@@ -171,16 +170,13 @@ CELL_THICKNESS = 20.0
 CONV = 1 + 1 / ETA_RT
 
 
-def marginal_gain(I):
-    dP = I / (1e6 * CONV)
-    dM = (T_NIGHT * 1000) / PACK_WH_KG
-    dA = 1000 / lift_h2_used / CELL_THICKNESS
-    return dP * dM * dA
-
-
-I_range = [x for x in range(80, 300, 2)]
-k_range = [marginal_gain(I) for I in I_range]
-I_low, I_high = 114.4, 286.1
+# Развёртывание первой миссии: характерные высоты этапов (км), из раздела
+# "Доставка и ввод в эксплуатацию". Текст этапов -- дословно по §180/§183.
+# Высоты 130/82/70/60 -- схематические (форма кривой снижения), не заявляемые
+# числа; заявлено только ~55,7 км равновесия. x -- ход последовательности.
+DEP_ALT = [130.0, 80.0, 69.0, 60.0, 55.7, 55.7]
+DEP_X = [0.0, 1.1, 1.8, 2.7, 3.7, 5.1]
+DEP_PHASE_SPLIT = 4.7  # x, граница фаз: перехват на плавучесть (x=3.7) -- ещё фаза A
 
 values4 = [1032.9, 225, 561.0]  # г/см^2; 225 — среднее из "200-250" в тексте, не выведено
 colors4 = [MUTED, YELLOW, BLUE]
@@ -407,7 +403,6 @@ def build(lang):
         ax.axhline(alt_platform, color=MUTED, linewidth=0.7, linestyle="--", zorder=0)
         ax.spines[["top", "right"]].set_visible(False)
 
-    fig.suptitle(T["fig1_suptitle"], fontsize=11, x=0.02, ha="left")
     fig.tight_layout()
     save(fig, "atmosphere-profile", lang)
 
@@ -433,30 +428,45 @@ def build(lang):
         ax.axvline(T_DAY, color=MUTED, linewidth=0.7, linestyle=":")
         ax.spines[["top", "right"]].set_visible(False)
 
-    fig.suptitle(T["fig2_suptitle"], fontsize=11, x=0.02, ha="left")
     fig.tight_layout()
     save(fig, "energy-balance", lang)
 
     # -------------------------------------------------------------
-    # Fig 3 — расходимость коэффициента k (verify.py §7)
+    # Fig — последовательность развёртывания первой миссии: высота по этапам
+    # (раздел "Доставка и ввод в эксплуатацию", verify.py §52-53). x --
+    # схематический ход, не время.
     # -------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(6.4, 3.6))
-    ax.plot(I_range, k_range, color=BLUE, linewidth=2)
-    ax.axhline(1.0, color=ORANGE, linewidth=1.5, linestyle="--")
-    ax.annotate(T["fig3_threshold"], (I_range[0], 1.03), color=ORANGE, fontsize=8)
-    ax.fill_between(I_range, k_range, 1.0, where=[k > 1 for k in k_range],
-                     color=ORANGE, alpha=0.08)
-    ax.axvline(I_low, color=MUTED, linewidth=0.7, linestyle=":")
-    ax.axvline(I_high, color=MUTED, linewidth=0.7, linestyle=":")
-    ax.text(I_low, max(k_range) * 0.95, T["fig3_low"], fontsize=7, color=MUTED)
-    ax.text(I_high, max(k_range) * 0.95, T["fig3_high"], fontsize=7, color=MUTED,
-            ha="right")
-    ax.set_xlabel(T["fig3_xlabel"])
-    ax.set_ylabel(T["fig3_ylabel"])
-    ax.spines[["top", "right"]].set_visible(False)
-    fig.suptitle(T["fig3_suptitle"], fontsize=11, x=0.02, ha="left")
+    fig, ax = plt.subplots(figsize=(6.8, 4.0))
+    ax.plot(DEP_X, DEP_ALT, color=BLUE, linewidth=2, solid_capstyle="round", zorder=3)
+    ax.scatter(DEP_X[:5], DEP_ALT[:5], color=ORANGE, s=34, zorder=5)
+    ax.scatter([DEP_X[5]], [DEP_ALT[5]], color=AQUA, s=34, zorder=5)
+    ax.axhline(55.7, color=MUTED, linewidth=0.7, linestyle="--", zorder=1)
+
+    ax.axvspan(DEP_X[0], DEP_PHASE_SPLIT, color=ORANGE, alpha=0.05, zorder=0)
+    ax.axvspan(DEP_PHASE_SPLIT, DEP_X[5] + 0.4, color=AQUA, alpha=0.06, zorder=0)
+    ax.axvline(DEP_PHASE_SPLIT, color=MUTED, linewidth=0.7, linestyle=":", zorder=1)
+    ax.text(DEP_X[0], 6, T["figdep_phaseA"], fontsize=7,
+            color="#52514e", ha="left", va="center")
+    ax.text(DEP_X[5] + 2.2, 6, T["figdep_phaseB"], fontsize=7,
+            color="#52514e", ha="right", va="center")
+
+    stg = T["figdep_stages"]
+    off = [(6, 8), (8, 6), (8, 8), (6, -16), (0, 13), (6, -12)]
+    va_ = ["bottom", "bottom", "bottom", "top", "bottom", "top"]
+    ha_ = ["left", "left", "left", "left", "center", "left"]
+    for i, (sx, sa) in enumerate(zip(DEP_X, DEP_ALT)):
+        ax.annotate(stg[i], (sx, sa), xytext=off[i], textcoords="offset points",
+                    fontsize=7.5, color="#0b0b0b", va=va_[i], ha=ha_[i])
+
+    ax.set_ylabel(T["figdep_ylabel"])
+    ax.set_title(T["figdep_title"], fontsize=10, loc="left", color="#52514e")
+    ax.set_xlim(DEP_X[0] - 0.3, DEP_X[5] + 2.4)
+    ax.set_ylim(0, 140)
+    ax.set_xticks([])
+    ax.grid(axis="x", visible=False)
+    ax.spines[["top", "right", "bottom"]].set_visible(False)
     fig.tight_layout()
-    save(fig, "battery-divergence", lang)
+    save(fig, "deployment-sequence", lang)
 
     # -------------------------------------------------------------
     # Fig 4 — радиационное экранирование (verify.py §14)
@@ -468,7 +478,6 @@ def build(lang):
                     xytext=(0, 4), textcoords="offset points", ha="center", fontsize=9)
     ax.set_ylabel(T["fig4_ylabel"])
     ax.spines[["top", "right"]].set_visible(False)
-    fig.suptitle(T["fig4_suptitle"], fontsize=10.5, x=0.02, ha="left")
     fig.tight_layout()
     save(fig, "radiation-shielding", lang)
 
@@ -513,7 +522,6 @@ def build(lang):
               ncol=3, frameon=False, fontsize=7.5, handletextpad=0.4,
               columnspacing=1.2)
 
-    fig.suptitle(T["fig5_suptitle"], fontsize=10.5, x=0.5, ha="center")
     fig.tight_layout()
     save(fig, "platform-cross-section", lang)
 
@@ -548,7 +556,6 @@ def build(lang):
               ncol=3, frameon=False, fontsize=7.5, handletextpad=0.4,
               columnspacing=1.2)
 
-    fig.suptitle(T["fig6_suptitle"], fontsize=10.5, x=0.5, ha="center")
     fig.tight_layout()
     save(fig, "platform-topdown", lang)
 
@@ -598,7 +605,6 @@ def build(lang):
               ncol=5, frameon=False, fontsize=7.5, handletextpad=0.4,
               columnspacing=1.2)
 
-    fig.suptitle(T["fig7_suptitle"], fontsize=10.5, x=0.5, ha="center")
     fig.tight_layout()
     save(fig, "airlock-docking", lang)
 
