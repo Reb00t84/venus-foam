@@ -1,6 +1,6 @@
 # Venus Foam
 
-[![Code DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148026.svg)](https://doi.org/10.5281/zenodo.22148026)
+[![Code DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148025.svg)](https://doi.org/10.5281/zenodo.22148025)
 [![Preprint DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22148407.svg)](https://doi.org/10.5281/zenodo.22148407)
 
 Engineering analysis of a modular floating station concept in the cloud layer
