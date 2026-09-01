@@ -275,6 +275,16 @@ In terms of resources, a child's birth occupies the same fixed platform capacity
 
 ---
 
+## Code and data availability
+
+Repository: https://github.com/Reb00t84/venus-foam
+
+Every number in the document is computed in `venus_calc/verify.py`. The script recomputes them from scratch from physical constants, with no manual steps, and reproduces the result on re-run. Figures are built by `preprint/make_figures.py`, the PDF by `preprint/build_preprint.py`. Inputs are archival measurements from the Venera, Vega, Pioneer Venus, and Venus Express missions and the published works listed under "Sources".
+
+Preprint, all versions: DOI 10.5281/zenodo.22148407. Code archive, all versions: DOI 10.5281/zenodo.22148025.
+
+---
+
 ## Acknowledgments and a note on method
 
 Calculations (`venus_calc/verify.py`), figures (`preprint/make_figures.py`), and the document text were developed in extended dialogue with AI systems (Claude, Anthropic; Gemini, Google), used as tools for computation, source search and verification, and stress-testing claims; some of the analysis Gemini proposed (including a PTFE permeability constant and a cloud liquid-water-content estimate for a dynamic-buoy collection scheme) did not survive independent verification and was not included in the document — that too is part of the method, not only the results that were kept. Responsibility for all statements rests with the author.
