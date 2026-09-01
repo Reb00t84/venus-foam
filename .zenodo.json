@@ -1,0 +1,12 @@
+{
+  "title": "Venus Foam: engineering analysis of a modular floating platform fleet in the Venus cloud layer",
+  "upload_type": "software",
+  "creators": [
+    { "name": "Bochkaryov, Semyon", "orcid": "0009-0003-2093-891X" }
+  ],
+  "license": "MIT",
+  "related_identifiers": [
+    { "identifier": "10.5281/zenodo.22148407", "relation": "isSupplementTo", "scheme": "doi" },
+    { "identifier": "https://github.com/Reb00t84/venus-foam", "relation": "isSupplementTo", "scheme": "url" }
+  ]
+}
